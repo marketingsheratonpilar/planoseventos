@@ -32,11 +32,9 @@
   .f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--slate)}
   .f input,.f select{font-family:var(--mono);font-size:13px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:var(--ink);width:100%}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.12s}
-  .btn:hover{background:#f8fafc}
-  .btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .btn-primary:hover{background:var(--navy-d)}
-  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}
-  .btn-ghost:hover{background:rgba(255,255,255,.22)}
+  .btn:hover{background:#f8fafc}.btn:disabled{opacity:.4;cursor:default}
+  .btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}.btn-primary:hover{background:var(--navy-d)}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}.btn-ghost:hover{background:rgba(255,255,255,.22)}
   .btn-block{width:100%}.btn-big{padding:11px;font-size:13px}
   .btn-danger{background:#fef2f2;color:#dc2626;border-color:#fecaca}
   .pal{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-size:12px;margin-bottom:5px;transition:.12s}
@@ -46,7 +44,7 @@
   .pal .pl{color:#94a3b8;flex:0 0 auto;font-weight:700}
   .toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;color:var(--slate)}
   .tb{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 9px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer}
-  .tb:hover{background:#f8fafc}.tb.on{color:var(--navy);border-color:#c7d2e0}.tb.off{color:#cbd5e1}
+  .tb:hover{background:#f8fafc}.tb:disabled{opacity:.4;cursor:default}.tb.on{color:var(--navy);border-color:#c7d2e0}.tb.off{color:#cbd5e1}
   .canvas-box{background:#fff;border:1px solid var(--line);border-radius:10px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.05);max-width:100%}
   .row{display:flex;justify-content:space-between;font-size:12px;padding:1px 0}.row .v{font-family:var(--mono)}
   .muted{font-size:10px;color:#94a3b8;margin-top:5px;line-height:1.4}
@@ -62,7 +60,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useRef, useMemo, useEffect } = React;
+const { useState, useRef, useMemo, useEffect, useReducer } = React;
 
 const CAT = {
   redonda_180:     { nm:"Redonda Ø1,80 (12p)",        forma:"circ", d:1.80,         fill:"#dbeafe", stroke:"#2563eb", cat:"Mesas", sillas:12 },
@@ -80,12 +78,36 @@ const CAT = {
 };
 const MOD_ESC={w:2.44,h:1.80}, MOD_PISTA={w:1.20,h:1.20};
 const MESA_OPTS=["redonda_180","redonda_150","cuadrada_090","escuela_244x075","escuela_244x045","escuela_180x045","espejada_244x090"];
-const GIRASOLES={w:21.64,secLen:14.22};
-
-// Puertas reales (metros). [centro, ancho]
-const DOOR_FRONT=[[5.36,2.03],[8.62,2.04],[12.48,3.25]];        // verdes, pared frente (lado superior)
-const DOOR_LEFT=[[4.97,0.99],[6.68,2.44],[8.40,0.99],[20.02,0.99],[21.74,2.44],[23.46,0.99],[34.67,0.99],[36.39,2.44],[38.10,0.99]]; // verdes pared izq
-const DOOR_RIGHT=[[6.83,2.36],[8.70,0.91],[21.58,2.37],[23.45,0.91],[36.48,2.36],[38.35,0.91]]; // rojas pared der
+const SALONES={
+  girasoles:{nombre:"Los Girasoles",w:21.64,total:43.44,divThick:0.1,
+    sections:[[0,14.18],[14.28,28.87],[28.97,43.44]],
+    combos:[
+      {label:"Sección 1 (ingreso + izquierda)",from:1,to:1},
+      {label:"Sección 2 (medio)",from:2,to:2},
+      {label:"Sección 3 (derecha)",from:3,to:3},
+      {label:"Secciones 1 y 2",from:1,to:2},
+      {label:"Secciones 2 y 3",from:2,to:3},
+      {label:"Completo (1-3)",from:1,to:3},
+    ],
+    doors:{green:[["top",5.38,2.12],["top",8.67,2.12],["top",12.42,3.20],["left",6.91,4.46],["left",21.60,4.46],["left",36.29,4.46]],
+           red:[["right",6.90,2.13],["right",21.59,2.13],["right",36.28,2.13]]}},
+  alamos:{nombre:"Los Álamos",w:13.15,total:29.49,divThick:0.1,
+    sections:[[0,7.32],[7.42,14.70],[14.80,22.08],[22.18,29.49]],
+    combos:[
+      {label:"Sección 1 (izquierda)",from:1,to:1},
+      {label:"Sección 2",from:2,to:2},
+      {label:"Sección 3",from:3,to:3},
+      {label:"Sección 4 (derecha)",from:4,to:4},
+      {label:"Secciones 1 y 2",from:1,to:2},
+      {label:"Secciones 1, 2 y 3",from:1,to:3},
+      {label:"Secciones 2 y 3",from:2,to:3},
+      {label:"Secciones 2, 3 y 4",from:2,to:4},
+      {label:"Secciones 3 y 4",from:3,to:4},
+      {label:"Completo (1-4)",from:1,to:4},
+    ],
+    doors:{green:[["left",5.58,2.00],["left",8.98,2.00],["left",20.39,2.00],["left",23.80,2.00]],
+           red:[["right",1.42,2.13],["right",8.78,2.11],["right",16.13,2.11],["right",23.59,2.13]]}},
+};
 
 let _id=1; const uid=()=>"e"+(_id++);
 const snap=(v,s)=>s?Math.round(v/s)*s:v;
@@ -94,63 +116,130 @@ const r2=(n)=>Number(Number(n).toFixed(2));
 const PAD=46;
 
 const memStore={};
-const store={
-  read(){try{return JSON.parse(localStorage.getItem("girasoles_layouts")||"{}");}catch(e){return memStore.d||{};}},
-  write(o){try{localStorage.setItem("girasoles_layouts",JSON.stringify(o));}catch(e){memStore.d=o;}}
-};
+const store={read(){try{return JSON.parse(localStorage.getItem("girasoles_layouts")||"{}");}catch(e){return memStore.d||{};}},write(o){try{localStorage.setItem("girasoles_layouts",JSON.stringify(o));}catch(e){memStore.d=o;}}};
 
-const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4"};
+const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",undo:"M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",redo:"M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3"};
 const Ic=({d,s=16})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
 function NumF({label,v,on,step=1,min}){return(<label className="f">{label}<input type="number" value={v} step={step} onChange={e=>{let n=+e.target.value;if(min!=null)n=Math.max(min,n);on(n);}}/></label>);}
-function Pal({onClick,nm,sw,dash}){return(<button className="pal" onClick={onClick}><span className="sw" style={dash?{border:`2px dashed ${sw}`}:{background:sw+"33",border:`1.5px solid ${sw}`}}></span><span className="nm">{nm}</span><span className="pl">+</span></button>);}
+function Pal({onClick,nm,sw,dash,wavy}){return(<button className="pal" onClick={onClick}><span className="sw" style={wavy?{}:(dash?{border:`2px dashed ${sw}`}:{background:sw+"33",border:`1.5px solid ${sw}`})}>{wavy&&<svg width="15" height="15" viewBox="0 0 15 15"><path d="M0 8 Q3.75 3 7.5 8 T15 8" fill="none" stroke={sw} strokeWidth="1.6"/></svg>}</span><span className="nm">{nm}</span><span className="pl">+</span></button>);}
 
 function App(){
-  const [secciones,setSecciones]=useState(3);
-  const [room,setRoom]=useState({w:GIRASOLES.w,l:GIRASOLES.secLen*3});
+  const [salonKey,setSalonKey]=useState("girasoles");
+  const S=SALONES[salonKey];
+  const [comboIdx,setComboIdx]=useState(SALONES.girasoles.combos.length-1);
+  const combo=S.combos[comboIdx]||S.combos[S.combos.length-1];
+  const [off,setOff]=useState(0);
+  const [room,setRoom]=useState({w:SALONES.girasoles.w,l:SALONES.girasoles.total});
   const [els,setEls]=useState([]);
-  const [sel,setSel]=useState(null);
+  const [selIds,setSelIds]=useState([]);
   const [scale,setScale]=useState(13);
   const [imn,setImn]=useState(0.25);
   const [grid,setGrid]=useState(true);
   const [showDoors,setShowDoors]=useState(true);
   const [showSillas,setShowSillas]=useState(true);
   const [horiz,setHoriz]=useState(false);
+  const [marquee,setMarquee]=useState(null);
   const [gen,setGen]=useState({tipoMesa:"redonda_180",mesas:24,apoyo:8,pistaCols:8,pistaRows:8,escCols:4,escRows:2,pared:"arriba",barras:4});
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
-  const svgRef=useRef(null), drag=useRef(null);
+  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null);
+  const elsRef=useRef(els); elsRef.current=els;
+  const histRef=useRef({past:[],future:[]});
+  const [,force]=useReducer(x=>x+1,0);
 
   const W=room.w, L=room.l;
   const contentW=PAD*2+W*scale, contentH=PAD*2+L*scale+30;
   const svgW=horiz?contentH:contentW, svgH=horiz?contentW:contentH;
   const gT=horiz?`translate(0,${contentW}) rotate(-90)`:"";
   const px=m=>PAD+m*scale;
-  const selEl=els.find(e=>e.id===sel)||null;
+  const selEl=selIds.length===1?els.find(e=>e.id===selIds[0]):null;
 
   useEffect(()=>{setSaved(Object.keys(store.read()));},[]);
   const flash=t=>{setToast(t);setTimeout(()=>setToast(""),2400);};
-  const setSecs=n=>{setSecciones(n);setRoom(r=>({...r,l:GIRASOLES.secLen*n}));};
+  function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);flash(S.nombre+" · "+c.label);}
+  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);flash("Salón: "+sa.nombre);}
+
+  // ---- historial ----
+  function pushHist(){const h=histRef.current;h.past.push(elsRef.current);if(h.past.length>120)h.past.shift();h.future=[];force();}
+  function undo(){const h=histRef.current;if(!h.past.length)return;h.future.push(elsRef.current);setEls(h.past.pop());setSelIds([]);force();}
+  function redo(){const h=histRef.current;if(!h.future.length)return;h.past.push(elsRef.current);setEls(h.future.pop());setSelIds([]);force();}
 
   function mk(tipo,ex={}){
     const id=uid(); const x=ex.x??W/2, y=ex.y??L/2;
     if(tipo==="escenario"){const c=ex.cols??gen.escCols,r=ex.rows??gen.escRows;return{id,tipo,x,y,rot:ex.rot??0,cols:c,rows:r,w:c*MOD_ESC.w,h:r*MOD_ESC.h,modW:MOD_ESC.w,modH:MOD_ESC.h};}
     if(tipo==="pista"){const c=ex.cols??gen.pistaCols,r=ex.rows??gen.pistaRows;return{id,tipo,x,y,rot:0,cols:c,rows:r,w:c*MOD_PISTA.w,h:r*MOD_PISTA.h,modW:MOD_PISTA.w,modH:MOD_PISTA.h};}
     if(tipo==="aereo"){return{id,tipo,x,y,rot:0,w:ex.w??4,h:ex.h??4};}
+    if(tipo==="entelado"){return{id,tipo,x,y,rot:ex.rot??0,w:ex.w??5,h:0.3};}
     const c=CAT[tipo];
     if(c.forma==="circ")return{id,tipo,x,y,rot:0,d:c.d,w:c.d,h:c.d};
     return{id,tipo,x,y,rot:ex.rot??0,w:c.w,h:c.h};
   }
-  const add=t=>{const e=mk(t);setEls(p=>[...p,e]);setSel(e.id);};
+  const add=t=>{pushHist();const e=mk(t);setEls(p=>[...p,e]);setSelIds([e.id]);};
   const upd=(id,patch)=>setEls(p=>p.map(e=>e.id===id?{...e,...patch}:e));
-  const del=id=>{setEls(p=>p.filter(e=>e.id!==id));if(sel===id)setSel(null);};
-  const dup=id=>{const e=els.find(x=>x.id===id);if(!e)return;const c={...e,id:uid(),x:Math.min(W-.5,e.x+1),y:Math.min(L-.5,e.y+1)};setEls(p=>[...p,c]);setSel(c.id);};
-  const rot=(id,d)=>{const e=els.find(x=>x.id===id);if(!e)return;upd(id,{rot:((e.rot||0)+d)%360});};
+  const updH=(id,patch)=>{pushHist();upd(id,patch);};
+  const rotOne=(id,d)=>{const e=els.find(x=>x.id===id);if(!e)return;updH(id,{rot:((e.rot||0)+d)%360});};
+  function groupRotate(d){pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,rot:((e.rot||0)+d)%360}:e));}
+  function groupDup(){pushHist();const copies=els.filter(e=>selIds.includes(e.id)).map(e=>({...e,id:uid(),x:Math.min(W-.5,e.x+1),y:Math.min(L-.5,e.y+1)}));setEls(p=>[...p,...copies]);setSelIds(copies.map(c=>c.id));}
+  function groupDel(){pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);}
 
-  function down(e,id){e.stopPropagation();setSel(id);const el=els.find(x=>x.id===id);drag.current={id,sx:e.clientX,sy:e.clientY,ox:el.x,oy:el.y};e.currentTarget.setPointerCapture&&e.currentTarget.setPointerCapture(e.pointerId);}
-  function move(e){const d=drag.current;if(!d)return;let dx,dy;if(horiz){dx=-(e.clientY-d.sy)/scale;dy=(e.clientX-d.sx)/scale;}else{dx=(e.clientX-d.sx)/scale;dy=(e.clientY-d.sy)/scale;}let nx=snap(d.ox+dx,imn),ny=snap(d.oy+dy,imn);upd(d.id,{x:Math.max(0,Math.min(W,nx)),y:Math.max(0,Math.min(L,ny))});}
-  function up(){drag.current=null;}
-  useEffect(()=>{function k(ev){if((ev.key==="Delete"||ev.key==="Backspace")&&sel){if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName))return;del(sel);}}window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);},[sel,els]);
+  // ---- pantalla -> sala ----
+  function screenToRoom(clientX,clientY){
+    const rect=svgRef.current.getBoundingClientRect();
+    const kx=svgW/rect.width, ky=svgH/rect.height;
+    const sx=(clientX-rect.left)*kx, sy=(clientY-rect.top)*ky;
+    let cx,cy; if(horiz){cx=contentW-sy;cy=sx;}else{cx=sx;cy=sy;}
+    return {x:(cx-PAD)/scale,y:(cy-PAD)/scale};
+  }
+
+  // ---- arrastre (individual o grupo) ----
+  function down(e,id){
+    e.stopPropagation();
+    if(e.shiftKey){setSelIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);return;}
+    let ids;
+    if(selIds.includes(id)&&selIds.length>1)ids=selIds; else {ids=[id];setSelIds([id]);}
+    pushHist();
+    const starts={}; elsRef.current.forEach(el=>{if(ids.includes(el.id))starts[el.id]={x:el.x,y:el.y};});
+    drag.current={ids,sx:e.clientX,sy:e.clientY,starts};
+    e.currentTarget.setPointerCapture&&e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function svgDown(e){
+    const p=screenToRoom(e.clientX,e.clientY);
+    marqRef.current={x0:p.x,y0:p.y,shift:e.shiftKey};
+    setMarquee({x0:p.x,y0:p.y,x1:p.x,y1:p.y});
+    if(!e.shiftKey)setSelIds([]);
+  }
+  function move(e){
+    if(drag.current){
+      const d=drag.current; let dx,dy;
+      if(horiz){dx=-(e.clientY-d.sy)/scale;dy=(e.clientX-d.sx)/scale;}else{dx=(e.clientX-d.sx)/scale;dy=(e.clientY-d.sy)/scale;}
+      setEls(p=>p.map(el=>{if(d.starts[el.id]){let nx=snap(d.starts[el.id].x+dx,imn),ny=snap(d.starts[el.id].y+dy,imn);return{...el,x:Math.max(0,Math.min(W,nx)),y:Math.max(0,Math.min(L,ny))};}return el;}));
+    } else if(marqRef.current){
+      const p=screenToRoom(e.clientX,e.clientY);
+      setMarquee({...marqRef.current,x1:p.x,y1:p.y});
+    }
+  }
+  function up(e){
+    if(drag.current){drag.current=null;}
+    if(marqRef.current){
+      const mq=marqRef.current, p=screenToRoom(e.clientX,e.clientY);
+      const minX=Math.min(mq.x0,p.x),maxX=Math.max(mq.x0,p.x),minY=Math.min(mq.y0,p.y),maxY=Math.max(mq.y0,p.y);
+      if((maxX-minX)>0.3||(maxY-minY)>0.3){
+        const hit=elsRef.current.filter(el=>el.x>=minX&&el.x<=maxX&&el.y>=minY&&el.y<=maxY).map(el=>el.id);
+        setSelIds(mq.shift?prev=>Array.from(new Set([...prev,...hit])):hit);
+      }
+      marqRef.current=null;setMarquee(null);
+    }
+  }
+
+  useEffect(()=>{
+    function k(ev){
+      const typing=["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName);
+      if((ev.metaKey||ev.ctrlKey)&&(ev.key==="z"||ev.key==="Z")){ev.preventDefault();ev.shiftKey?redo():undo();return;}
+      if((ev.key==="Delete"||ev.key==="Backspace")&&selIds.length&&!typing){ev.preventDefault();pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);}
+    }
+    window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);
+  },[selIds,horiz]);
 
   function generar(){
     const out=[]; const m=1.3;
@@ -183,20 +272,29 @@ function App(){
       for(let i=0;i<gen.barras;i++){out.push(mk("barra",{x:bx,y:by,rot:90}));zonasBar.push({x:bx,y:by,w:bh,h:bw});by+=bw;}
     }
 
-    const zonas=[{x:sx,y:sy,w:sFW+1.0,h:sFH+1.0},{x:pxc,y:pyc,w:pw+1.0,h:ph+1.0},...zonasBar.map(z=>({x:z.x,y:z.y,w:z.w+0.6,h:z.h+1.2}))];
+    // RESERVA: banda completa del escenario (sin mesas en la línea del escenario) + pista + barras
+    const zonas=[];
+    if(!vert)zonas.push({x:W/2,y:sy,w:W+4,h:sFH+1.6});
+    else zonas.push({x:sx,y:L/2,w:sFW+1.6,h:L+4});
+    zonas.push({x:pxc,y:pyc,w:pw+1.0,h:ph+1.0});
+    zonasBar.forEach(z=>zonas.push({x:z.x,y:z.y,w:z.w+0.6,h:z.h+1.2}));
     const choca=(x,y,w,h)=>zonas.some(z=>Math.abs(x-z.x)<(w+z.w)/2&&Math.abs(y-z.y)<(h+z.h)/2);
 
-    // grilla CENTRADA y simétrica sobre todo el salón -> distribución pareja a ambos lados
+    // mesas: grilla uniforme (líneas rectas, igual distancia) y adaptativa para repartir N en todo el salón
     const c=CAT[gen.tipoMesa];
     const tw=c.forma==="circ"?c.d:c.w, th=c.forma==="circ"?c.d:c.h;
-    const stepX=tw+(c.forma==="circ"?1.1:1.0), stepY=th+(c.forma==="circ"?1.1:1.0);
-    const ncol=Math.max(1,Math.floor((W-2*m)/stepX)), nrow=Math.max(1,Math.floor((L-2*m)/stepY));
-    const x0=W/2-(ncol-1)*stepX/2, y0=L/2-(nrow-1)*stepY/2;
-    let slots=[];
-    for(let r=0;r<nrow;r++)for(let cc=0;cc<ncol;cc++){const x=x0+cc*stepX,y=y0+r*stepY;if(x<m+tw/2||x>W-m-tw/2||y<m+th/2||y>L-m-th/2)continue;if(choca(x,y,tw,th))continue;slots.push({x,y});}
-    let chosen;
-    if(gen.mesas>=slots.length)chosen=slots;
-    else{chosen=[];const st=slots.length/gen.mesas;for(let i=0;i<gen.mesas;i++)chosen.push(slots[Math.floor(i*st)]);}
+    const baseX=tw+(c.forma==="circ"?1.1:1.0), baseY=th+(c.forma==="circ"?1.1:1.0);
+    function lattice(sxs,sys){
+      const ncol=Math.max(1,Math.floor((W-2*m)/sxs)+1), nrow=Math.max(1,Math.floor((L-2*m)/sys)+1);
+      const gx=W/2-(ncol-1)*sxs/2, gy=L/2-(nrow-1)*sys/2;
+      const pts=[];
+      for(let r=0;r<nrow;r++)for(let cc=0;cc<ncol;cc++){const x=gx+cc*sxs,y=gy+r*sys;if(x<m+tw/2||x>W-m-tw/2||y<m+th/2||y>L-m-th/2)continue;if(choca(x,y,tw,th))continue;pts.push({x,y});}
+      return pts;
+    }
+    let pts=lattice(baseX,baseY);
+    if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(baseX*f,baseY*f);pts=p;if(p.length<=gen.mesas)break;}}
+    let chosen=pts;
+    if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
     chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y})));
     const placed=chosen.length;
 
@@ -205,13 +303,13 @@ function App(){
       if(!vert){const step=(L-2*m)/(Math.ceil(gen.apoyo/2)+1);out.push(mk("redonda_075",{x:first?m+.5:W-m-.5,y:m+step*(k+1)}));}
       else{const step=(W-2*m)/(Math.ceil(gen.apoyo/2)+1);out.push(mk("redonda_075",{x:m+step*(k+1),y:first?m+.5:L-m-.5}));}
     }
-    setEls(out);setSel(null);
+    pushHist();setEls(out);setSelIds([]);
     flash(`Generado: ${placed} mesas distribuidas${placed<gen.mesas?" (no entraron todas)":""}.`);
   }
-  const limpiar=()=>{setEls([]);setSel(null);};
+  const limpiar=()=>{pushHist();setEls([]);setSelIds([]);};
 
-  function guardar(){const n=name.trim();if(!n){flash("Poné un nombre.");return;}const all=store.read();all[n]={room,secciones,els,gen};store.write(all);setSaved(Object.keys(all));flash("Guardado: "+n);}
-  function cargar(n){const d=store.read()[n];if(!d)return;setRoom(d.room);if(d.secciones)setSecciones(d.secciones);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSel(null);flash("Cargado: "+n);}
+  function guardar(){const n=name.trim();if(!n){flash("Poné un nombre.");return;}const all=store.read();all[n]={salonKey,comboIdx,off,room,els,gen};store.write(all);setSaved(Object.keys(all));flash("Guardado: "+n);}
+  function cargar(n){const d=store.read()[n];if(!d)return;pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
   function borrar(n){const all=store.read();delete all[n];store.write(all);setSaved(Object.keys(all));}
 
   function exportPNG(){
@@ -228,36 +326,45 @@ function App(){
   const counts=useMemo(()=>{const c={};els.forEach(e=>c[e.tipo]=(c[e.tipo]||0)+1);return c;},[els]);
   const cubiertos=useMemo(()=>{let t=0;els.forEach(e=>{if(CAT[e.tipo]?.sillas)t+=CAT[e.tipo].sillas;});return t;},[els]);
 
-  const TR=horiz?90:0; // contrarrotación de textos para que queden derechos
+  const TR=horiz?90:0;
   function sillasR(d,n){const r=(d/2+0.32)*scale,s=0.5*scale,a=[];for(let i=0;i<n;i++){const ang=(i/n)*Math.PI*2,cx=Math.cos(ang)*r,cy=Math.sin(ang)*r;a.push(<rect key={i} x={cx-s/2} y={cy-s/2} width={s} height={s} rx={2} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={.8} transform={`rotate(${ang*180/Math.PI+90} ${cx} ${cy})`}/>);}return a;}
   function modulos(e){const a=[];for(let c=1;c<e.cols;c++){const x=-e.w/2*scale+c*e.modW*scale;a.push(<line key={"v"+c} x1={x} y1={-e.h/2*scale} x2={x} y2={e.h/2*scale} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}for(let r=1;r<e.rows;r++){const y=-e.h/2*scale+r*e.modH*scale;a.push(<line key={"h"+r} x1={-e.w/2*scale} y1={y} x2={e.w/2*scale} y2={y} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}return a;}
+  function enteladoPath(e){const len=e.w*scale,amp=0.2*scale,waves=Math.max(2,Math.round(e.w/0.7)),steps=waves*10;let d="M "+(-len/2)+" 0";for(let i=1;i<=steps;i++){const x=-len/2+(i/steps)*len,y=Math.sin((i/steps)*waves*2*Math.PI)*amp;d+=" L "+x.toFixed(1)+" "+y.toFixed(1);}return d;}
 
   function renderEl(e){
-    const isS=e.id===sel, c=CAT[e.tipo]; let inner;
+    const isS=selIds.includes(e.id), c=CAT[e.tipo]; let inner;
     if(c&&c.forma==="circ"){inner=<g>{showSillas&&c.sillas&&sillasR(e.d,c.sillas)}<circle r={e.d/2*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/></g>;}
     else if(e.tipo==="escenario"||e.tipo==="pista"){const f=e.tipo==="escenario"?"#fed7aa":"#bbf7d0",st=e.tipo==="escenario"?"#ea580c":"#16a34a";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={f} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}<text textAnchor="middle" dy={4} fontSize={11} fontWeight="700" fill={st} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.tipo==="escenario"?"ESC.":"PISTA"}</text></g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
+    else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else{inner=<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>;}
-    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} style={{cursor:"grab"}}>{inner}{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-e.h/2*scale-4} width={e.w*scale+8} height={e.h*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
+    const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
+    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} style={{cursor:"grab"}}>{inner}{isS&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
-  function divisorias(){const a=[];for(let i=1;i<secciones;i++){const y=px(GIRASOLES.secLen*i);a.push(<line key={i} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="2 6"/>);}return <g>{a}</g>;}
+  function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="2 6"/>);}return <g>{a}</g>;}
+  function doorSeg(wall,pos,w,color,key){
+    if(wall==="top"){if(combo.from!==1||pos>W)return null;return <line key={key} x1={px(pos-w/2)} y1={px(0)} x2={px(pos+w/2)} y2={px(0)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
+    if(wall==="bottom"){if(combo.to!==S.sections.length||pos>W)return null;return <line key={key} x1={px(pos-w/2)} y1={px(L)} x2={px(pos+w/2)} y2={px(L)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
+    if(wall==="left"){const y=pos-off;if(y<-0.01||y>L+0.01)return null;return <line key={key} x1={px(0)} y1={px(y-w/2)} x2={px(0)} y2={px(y+w/2)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
+    const y=pos-off;if(y<-0.01||y>L+0.01)return null;return <line key={key} x1={px(W)} y1={px(y-w/2)} x2={px(W)} y2={px(y+w/2)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;
+  }
   function puertas(){
     if(!showDoors)return null; const a=[];
-    DOOR_FRONT.forEach((d,i)=>a.push(<line key={"f"+i} x1={px(d[0]-d[1]/2)} y1={px(0)} x2={px(d[0]+d[1]/2)} y2={px(0)} stroke="#16a34a" strokeWidth={5} strokeLinecap="round"/>));
-    DOOR_LEFT.forEach((d,i)=>{if(d[0]>L)return;a.push(<line key={"l"+i} x1={px(0)} y1={px(d[0]-d[1]/2)} x2={px(0)} y2={px(d[0]+d[1]/2)} stroke="#16a34a" strokeWidth={5} strokeLinecap="round"/>);});
-    DOOR_RIGHT.forEach((d,i)=>{if(d[0]>L)return;a.push(<line key={"r"+i} x1={px(W)} y1={px(d[0]-d[1]/2)} x2={px(W)} y2={px(d[0]+d[1]/2)} stroke="#dc2626" strokeWidth={5} strokeLinecap="round"/>);});
+    S.doors.green.forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#16a34a","g"+i);if(s)a.push(s);});
+    S.doors.red.forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#dc2626","r"+i);if(s)a.push(s);});
     return <g>{a}</g>;
   }
   function escalaBar(){const y=px(L)+22,cx=px(2.5);return <g fontFamily="var(--mono)"><line x1={px(0)} y1={y} x2={px(5)} y2={y} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(0)} y1={y-4} x2={px(0)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(5)} y1={y-4} x2={px(5)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><text x={cx} y={y-7} textAnchor="middle" fontSize={10} fill="#1e3a5f" transform={`rotate(${TR} ${cx} ${y-7})`}>5 m</text></g>;}
 
-  const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":(CAT[t]?.nm||t);
+  const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":(CAT[t]?.nm||t);
 
   return <div>
     <div className="header">
-      <div><div className="eyebrow">Sheraton Pilar · Centro de Convenciones</div><div className="title">Planificador de salones — Los Girasoles</div></div>
+      <div><div className="eyebrow">Sheraton Pilar · Centro de Convenciones</div><div className="title">Planificador de salones — {S.nombre}</div></div>
       <div className="roomcfg">
-        <label>Secciones<select value={secciones} onChange={e=>setSecs(+e.target.value)}><option value={1}>1 (14,22 m)</option><option value={2}>2 (28,44 m)</option><option value={3}>3 — completo (42,66 m)</option></select></label>
+        <label>Salón<select value={salonKey} onChange={e=>changeSalon(e.target.value)}>{Object.entries(SALONES).map(([k,v])=><option key={k} value={k}>{v.nombre}</option>)}</select></label>
+        <label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>
         <label>Ancho (m)<input type="number" value={room.w} step={0.5} onChange={e=>setRoom(r=>({...r,w:Math.max(2,+e.target.value)}))}/></label>
         <label>Largo (m)<input type="number" value={room.l} step={0.5} onChange={e=>setRoom(r=>({...r,l:Math.max(2,+e.target.value)}))}/></label>
         <div className="head-actions"><button className="btn btn-ghost" onClick={exportPNG}><Ic d={I.download} s={15}/> PNG</button><button className="btn btn-ghost" onClick={()=>window.print()}><Ic d={I.print} s={15}/> PDF</button></div>
@@ -272,7 +379,7 @@ function App(){
             <label className="f">Tipo de mesa<select value={gen.tipoMesa} onChange={e=>setGen({...gen,tipoMesa:e.target.value})}>{MESA_OPTS.map(k=><option key={k} value={k}>{CAT[k].nm}</option>)}</select></label>
             <NumF label="Cant. mesas" v={gen.mesas} min={0} on={n=>setGen({...gen,mesas:n})}/>
             <NumF label="Mesas apoyo" v={gen.apoyo} min={0} on={n=>setGen({...gen,apoyo:n})}/>
-            <label className="f">Escenario en<select value={gen.pared} onChange={e=>setGen({...gen,pared:e.target.value})}><option value="arriba">Pared frente</option><option value="abajo">Pared fondo</option><option value="izquierda">Pared izq.</option><option value="derecha">Pared der.</option></select></label>
+            <label className="f">Escenario en<select value={gen.pared} onChange={e=>setGen({...gen,pared:e.target.value})}><option value="arriba">Pared Izquierda</option><option value="abajo">Pared Derecha</option><option value="izquierda">Pared Ingreso</option><option value="derecha">Pared Back</option></select></label>
             <NumF label="Pista cols" v={gen.pistaCols} min={1} on={n=>setGen({...gen,pistaCols:n})}/>
             <NumF label="Pista filas" v={gen.pistaRows} min={1} on={n=>setGen({...gen,pistaRows:n})}/>
             <NumF label="Escen. cols" v={gen.escCols} min={1} on={n=>setGen({...gen,escCols:n})}/>
@@ -289,13 +396,17 @@ function App(){
           <Pal onClick={()=>add("escenario")} nm="Escenario" sw="#ea580c"/>
           <Pal onClick={()=>add("pista")} nm="Pista de baile" sw="#16a34a"/>
           <Pal onClick={()=>add("aereo")} nm="Aéreo de pista" sw="#7c3aed" dash/>
+          <div className="sec-h" style={{marginTop:10}}>Decoración</div>
+          <Pal onClick={()=>add("entelado")} nm="Entelado de pared" sw="#0d9488" wavy/>
           {["Mesas","Servicio","Técnica","Otros"].map(cat=>(<div key={cat}><div className="sec-h" style={{marginTop:10}}>{cat}</div>{Object.entries(CAT).filter(([,v])=>v.cat===cat).map(([k,v])=><Pal key={k} onClick={()=>add(k)} nm={v.nm} sw={v.stroke}/>)}</div>))}
-          <div className="muted">DJ, parlante y aéreo: medidas editables desde el panel derecho cada vez que los usás.</div>
+          <div className="muted">Entelado: agregalo y rotalo/estiralo contra la pared que quieras (una, dos o las que sean). DJ, parlante y aéreo: medidas editables a la derecha.</div>
         </div>
       </div>
 
       <div className="col col-center">
         <div className="toolbar">
+          <button className="tb" disabled={!histRef.current.past.length} onClick={undo}><Ic d={I.undo} s={15}/></button>
+          <button className="tb" disabled={!histRef.current.future.length} onClick={redo}><Ic d={I.redo} s={15}/></button>
           <button className="tb" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={15}/></button>
           <button className="tb" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={15}/></button>
           <button className="tb on" onClick={()=>setHoriz(v=>!v)}><Ic d={I.flip} s={15}/> {horiz?"Horizontal":"Vertical"}</button>
@@ -305,10 +416,11 @@ function App(){
           <label className="f" style={{flexDirection:"row",alignItems:"center",gap:5,marginLeft:4}}>Imán<select value={imn} onChange={e=>setImn(+e.target.value)} style={{width:"auto"}}><option value={0}>off</option><option value={0.1}>10 cm</option><option value={0.25}>25 cm</option><option value={0.5}>50 cm</option></select></label>
         </div>
         <div className="canvas-box">
-          <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={()=>setSel(null)} style={{touchAction:"none",maxWidth:"none"}}>
+          <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={svgDown} style={{touchAction:"none",maxWidth:"none"}}>
             <g transform={gT}>
               <rect x={px(0)} y={px(0)} width={W*scale} height={L*scale} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
               {gridLines()}{divisorias()}{els.map(renderEl)}{puertas()}{escalaBar()}
+              {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
             </g>
           </svg>
         </div>
@@ -316,27 +428,36 @@ function App(){
           <span><span className="dot" style={{background:"#16a34a"}}></span> Entrada</span>
           <span><span className="dot" style={{background:"#dc2626"}}></span> Back (mozos)</span>
           <span><span className="dot" style={{background:"#f59e0b"}}></span> Divisoria</span>
+          <span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>
           <span>Salón: {fmt(W)} × {fmt(L)} m · {fmt(W*L)} m²</span>
         </div>
+        <div className="muted" style={{marginTop:4}}>SHIFT+clic para sumar a la selección, o dibujá un recuadro sobre varios. ⌘Z deshacer · ⌘⇧Z rehacer.</div>
       </div>
 
       <div className="col col-right">
         <div className="card">
-          <div className="card-h">Elemento seleccionado</div>
-          {!selEl?<div className="muted">Tocá un elemento del plano para moverlo o editarlo.</div>:
+          <div className="card-h">{selIds.length>1?`${selIds.length} elementos seleccionados`:"Elemento seleccionado"}</div>
+          {selIds.length>1?
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              <button className="btn" onClick={()=>groupRotate(90)}><Ic d={I.rotate} s={14}/> 90°</button>
+              <button className="btn" onClick={groupDup}><Ic d={I.copy} s={14}/></button>
+              <button className="btn btn-danger" onClick={groupDel}><Ic d={I.trash} s={14}/> Borrar</button>
+            </div>
+          : !selEl? <div className="muted">Tocá un elemento para moverlo o editarlo.</div> :
           <div>
             <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>{labelTipo(selEl.tipo)}</div>
             <div className="grid2">
-              <NumF label="X (m)" v={r2(selEl.x)} step={0.25} on={n=>upd(selEl.id,{x:n})}/>
-              <NumF label="Y (m)" v={r2(selEl.y)} step={0.25} on={n=>upd(selEl.id,{y:n})}/>
-              {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><NumF label="Cols" v={selEl.cols} min={1} on={n=>upd(selEl.id,{cols:n,w:n*selEl.modW})}/><NumF label="Filas" v={selEl.rows} min={1} on={n=>upd(selEl.id,{rows:n,h:n*selEl.modH})}/></>}
-              {["dj","parlante","aereo"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>upd(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>upd(selEl.id,{h:n})}/></>}
+              <NumF label="X (m)" v={r2(selEl.x)} step={0.25} on={n=>updH(selEl.id,{x:n})}/>
+              <NumF label="Y (m)" v={r2(selEl.y)} step={0.25} on={n=>updH(selEl.id,{y:n})}/>
+              {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><NumF label="Cols" v={selEl.cols} min={1} on={n=>updH(selEl.id,{cols:n,w:n*selEl.modW})}/><NumF label="Filas" v={selEl.rows} min={1} on={n=>updH(selEl.id,{rows:n,h:n*selEl.modH})}/></>}
+              {["dj","parlante","aereo"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
+              {selEl.tipo==="entelado"&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
             </div>
             <div style={{display:"flex",gap:6,marginTop:9,flexWrap:"wrap"}}>
-              <button className="btn" onClick={()=>rot(selEl.id,90)}><Ic d={I.rotate} s={14}/> 90°</button>
-              <button className="btn" onClick={()=>rot(selEl.id,15)}>+15°</button>
-              <button className="btn" onClick={()=>dup(selEl.id)}><Ic d={I.copy} s={14}/></button>
-              <button className="btn btn-danger" onClick={()=>del(selEl.id)}><Ic d={I.trash} s={14}/></button>
+              <button className="btn" onClick={()=>rotOne(selEl.id,90)}><Ic d={I.rotate} s={14}/> 90°</button>
+              <button className="btn" onClick={()=>rotOne(selEl.id,15)}>+15°</button>
+              <button className="btn" onClick={()=>{pushHist();const e=els.find(x=>x.id===selEl.id);const c={...e,id:uid(),x:Math.min(W-.5,e.x+1),y:Math.min(L-.5,e.y+1)};setEls(p=>[...p,c]);setSelIds([c.id]);}}><Ic d={I.copy} s={14}/></button>
+              <button className="btn btn-danger" onClick={()=>{pushHist();setEls(p=>p.filter(x=>x.id!==selEl.id));setSelIds([]);}}><Ic d={I.trash} s={14}/></button>
             </div>
           </div>}
         </div>

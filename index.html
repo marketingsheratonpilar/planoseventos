@@ -55,6 +55,20 @@
   .legend span{display:inline-flex;align-items:center;gap:5px}
   .dot{width:11px;height:11px;border-radius:2px;display:inline-block}
   svg text{user-select:none}
+  @media print{
+    @page{margin:12mm;}
+    body{background:#fff !important;}
+    .header,.col-left,.toolbar,.legend,.col-center>.muted,.toast{display:none !important;}
+    .layout{display:block !important;}
+    .col{max-height:none !important;overflow:visible !important;border:none !important;padding:0 !important;width:auto !important;background:#fff !important;}
+    .canvas-box{border:none !important;box-shadow:none !important;page-break-after:always;}
+    .canvas-box svg{width:180mm !important;height:240mm !important;}
+    .no-export{display:none !important;}
+    .col-right .card{display:none !important;}
+    .col-right .card.print-resumen{display:block !important;border:none !important;padding:0 !important;}
+    .col-right .card.print-resumen .card-h{font-size:18px;margin-bottom:12px;}
+    .col-right .card.print-resumen .row{font-size:14px;padding:3px 0;}
+  }
 </style>
 </head>
 <body>

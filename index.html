@@ -365,25 +365,35 @@ function App(){
   }
   const planObj=()=>({v:1,salonKey,comboIdx,off,room,els,gen});
   const cfgFalta=()=>SHEET_API_URL.indexOf("PEGAR")===0;
-  async function openManager(mode){
-    if(cfgFalta()){flash("Falta configurar la URL de Google Sheets (ver instrucciones).");return;}
+  const defaultPlanName=()=>S.nombre+" — "+combo.label;
+  async function fetchRows(){const rows=await sheetAll();const eventos=[...new Set(rows.map(r=>r.evento).filter(Boolean))].sort((a,b)=>b.slice(0,8).localeCompare(a.slice(0,8)));return {rows,eventos};}
+  function abrirGuardar(){setPlanName(defaultPlanName());setDrive({mode:"saveName"});}
+  async function irACarpetas(){
+    if(cfgFalta()){flash("El guardado todavía no está disponible.");return;}
     setDriveBusy(true);
-    try{const rows=await sheetAll();const eventos=[...new Set(rows.map(r=>r.evento).filter(Boolean))];setDrive({mode,rows,eventos});}
-    catch(e){flash("Sheets: "+e.message);}
+    try{const {rows,eventos}=await fetchRows();setDrive({mode:"saveList",rows,eventos});}
+    catch(e){flash("No se pudo conectar. Reintentá en un momento.");}
+    setDriveBusy(false);
+  }
+  async function abrirAbrir(){
+    if(cfgFalta()){flash("La apertura todavía no está disponible.");return;}
+    setDriveBusy(true);
+    try{const {rows,eventos}=await fetchRows();setDrive({mode:"openList",rows,eventos});}
+    catch(e){flash("No se pudo conectar. Reintentá en un momento.");}
     setDriveBusy(false);
   }
   function nombreCarpeta(){const p=(form.fecha||"").split("-");const fch=p.length===3?p[0].slice(2)+"."+p[1]+"."+p[2]:"";return [fch,form.tipo,form.nombre.trim()].filter(Boolean).join(" - ");}
   async function saveToFolder(evento){
     setDriveBusy(true);
-    try{const plano=(planName.trim()||name.trim()||"Plano");await sheetSave({evento,plano,fecha:"",tipo:"",prota:"",data:JSON.stringify(planObj())});flash("Guardado en "+evento+": "+plano);setDrive(null);setPlanName("");}
-    catch(e){flash("Error al guardar: "+e.message);}
+    try{const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:"",tipo:"",prota:"",data:JSON.stringify(planObj())});flash("Plano guardado en "+evento);setDrive(null);}
+    catch(e){flash("No se pudo guardar. Reintentá.");}
     setDriveBusy(false);
   }
   async function createAndSave(){
     if(!form.fecha||!form.nombre.trim()){flash("Completá fecha y protagonista.");return;}
     setDriveBusy(true);
-    try{const evento=nombreCarpeta();const plano=(planName.trim()||name.trim()||"Plano");await sheetSave({evento,plano,fecha:form.fecha,tipo:form.tipo,prota:form.nombre.trim(),data:JSON.stringify(planObj())});flash("Evento creado y plano guardado");setDrive(null);setPlanName("");}
-    catch(e){flash("Error: "+e.message);}
+    try{const evento=nombreCarpeta();const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:form.fecha,tipo:form.tipo,prota:form.nombre.trim(),data:JSON.stringify(planObj())});flash("Evento creado y plano guardado");setDrive(null);setForm({fecha:"",tipo:"Boda",nombre:""});}
+    catch(e){flash("No se pudo guardar. Reintentá.");}
     setDriveBusy(false);
   }
   function openFolderFiles(evento){
@@ -391,8 +401,8 @@ function App(){
     setDrive({mode:"openFiles",evento,plans,rows:drive.rows,eventos:drive.eventos});
   }
   function loadDriveFile(row){
-    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");flash("Cargado: "+row.plano);setDrive(null);}
-    catch(e){flash("Plano inválido.");}
+    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");flash("Plano abierto: "+row.plano);setDrive(null);}
+    catch(e){flash("No se pudo abrir el plano.");}
   }
 
   function exportPNG(){
@@ -550,47 +560,38 @@ function App(){
           <div>{Object.entries(counts).map(([k,n])=><div className="row" key={k}><span style={{color:"#475569"}}>{labelTipo(k)}</span><span className="v">{n}</span></div>)}{cubiertos>0&&<div className="row" style={{borderTop:"1px solid #eef2f7",marginTop:5,paddingTop:5}}><span style={{color:"#475569",fontWeight:600}}>Cubiertos totales</span><span className="v" style={{fontWeight:700}}>{cubiertos}</span></div>}</div>}
         </div>
         <div className="card">
-          <div className="card-h">Guardar evento</div>
-          <div style={{display:"flex",gap:6}}><input className="f" style={{flex:1,fontSize:12,padding:"6px 8px",border:"1px solid #cbd5e1",borderRadius:6}} value={name} onChange={e=>setName(e.target.value)} placeholder="Ej: Casamiento 12/07"/><button className="btn btn-primary" onClick={guardar}><Ic d={I.save} s={15}/></button></div>
-          {saved.map(n=><div className="saved-item" key={n}><button style={{color:"#1e3a5f"}} onClick={()=>cargar(n)}><Ic d={I.folder} s={13}/> {n}</button><button style={{color:"#94a3b8"}} onClick={()=>borrar(n)}><Ic d={I.x} s={13}/></button></div>)}
-          <div className="muted">Guardado rápido en este navegador.</div>
-          <div className="sec-h" style={{marginTop:12}}>Archivo editable (compartible)</div>
+          <div className="card-h">Planos</div>
           <div style={{display:"flex",gap:6}}>
-            <button className="btn btn-block" onClick={descargarArchivo}><Ic d={I.download} s={14}/> Descargar plano</button>
-            <button className="btn btn-block" onClick={()=>fileRef.current&&fileRef.current.click()}><Ic d={I.folder} s={14}/> Abrir plano</button>
+            <button className="btn btn-primary btn-block" onClick={abrirGuardar} disabled={driveBusy}><Ic d={I.save} s={14}/> Guardar plano</button>
+            <button className="btn btn-block" onClick={abrirAbrir} disabled={driveBusy}><Ic d={I.folder} s={14}/> Abrir plano</button>
           </div>
-          <input ref={fileRef} type="file" accept=".json,application/json" onChange={abrirArchivo} style={{display:"none"}}/>
-          <div className="muted">Descarga un archivo .json editable que podés guardar a mano en Drive y reabrir con "Abrir plano".</div>
-          <div className="sec-h" style={{marginTop:12}}>Eventos del equipo (Google Sheets)</div>
-          <div style={{display:"flex",gap:6}}>
-            <button className="btn btn-primary btn-block" onClick={()=>openManager("saveList")} disabled={driveBusy}><Ic d={I.save} s={14}/> Guardar en Sheets</button>
-            <button className="btn btn-block" onClick={()=>openManager("openList")} disabled={driveBusy}><Ic d={I.folder} s={14}/> Abrir de Sheets</button>
-          </div>
-          <div className="muted">Guarda y abre planos en la planilla compartida del equipo, organizados por evento.</div>
         </div>
       </div>
     </div>
     {drive&&<div className="modal-bg" onClick={()=>!driveBusy&&setDrive(null)}>
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-h">
-          <span>{drive.mode==="saveList"?"Guardar plano":drive.mode==="saveForm"?"Nuevo evento":drive.mode==="openFiles"?("Planos · "+drive.evento):"Abrir plano"}</span>
+          <span>{drive.mode==="saveName"?"Guardar plano":drive.mode==="saveList"?"Guardar plano":drive.mode==="saveForm"?"Nuevo evento":drive.mode==="openFiles"?("Planos · "+drive.evento):"Abrir plano"}</span>
           <button className="xbtn" onClick={()=>setDrive(null)}><Ic d={I.x} s={16}/></button>
         </div>
-        {driveBusy&&<div className="muted" style={{marginBottom:6}}>Conectando con la planilla…</div>}
+        {driveBusy&&<div className="muted" style={{marginBottom:6}}>Cargando…</div>}
+        {drive.mode==="saveName"&&<div>
+          <label className="f">Nombre del archivo<input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="Nombre del plano"/></label>
+          <button className="btn btn-primary btn-block" style={{marginTop:12}} disabled={driveBusy} onClick={irACarpetas}>Guardar</button>
+        </div>}
         {drive.mode==="saveList"&&<div>
-          <label className="f">Nombre del plano<input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="Ej: Opción A — salón completo"/></label>
-          <div className="sec-h" style={{marginTop:10}}>Elegí el evento</div>
+          <div className="muted" style={{marginBottom:8}}>Guardando: <b>{planName||"(sin nombre)"}</b></div>
+          <div className="sec-h">Elegí el evento</div>
           <div className="modal-list">
-            {drive.eventos.length===0&&<div className="muted">Todavía no hay eventos guardados.</div>}
+            {drive.eventos.length===0&&<div className="muted">Todavía no hay eventos.</div>}
             {drive.eventos.map(ev=><button key={ev} className="folder-row" disabled={driveBusy} onClick={()=>saveToFolder(ev)}><Ic d={I.folder} s={14}/> {ev}</button>)}
           </div>
-          <button className="btn btn-primary btn-block" style={{marginTop:10}} onClick={()=>setDrive({...drive,mode:"saveForm"})}>＋ Crear evento nuevo</button>
+          <button className="btn btn-primary btn-block" style={{marginTop:10}} onClick={()=>setDrive({...drive,mode:"saveForm"})}>＋ Crear nuevo evento</button>
         </div>}
         {drive.mode==="saveForm"&&<div>
           <label className="f">Fecha del evento<input type="date" value={form.fecha} onChange={e=>setForm({...form,fecha:e.target.value})}/></label>
           <label className="f" style={{marginTop:8}}>Tipo de evento<select value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}>{["Fiesta de 15","Boda","Cumpleaños","Bar / Bat Mitzvá","Evento"].map(t=><option key={t} value={t}>{t}</option>)}</select></label>
           <label className="f" style={{marginTop:8}}>Nombre protagonista/s<input value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})} placeholder="Ej: Sofía / Mateo y Lucía"/></label>
-          <label className="f" style={{marginTop:8}}>Nombre del plano<input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="Ej: Opción A"/></label>
           <div className="muted" style={{marginTop:6}}>Evento: <b>{nombreCarpeta()||"(completá los datos)"}</b></div>
           <div style={{display:"flex",gap:6,marginTop:10}}>
             <button className="btn" onClick={()=>setDrive({...drive,mode:"saveList"})}>← Volver</button>

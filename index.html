@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root{--navy:#1e3a5f;--navy-d:#162d4a;--ink:#1f2937;--slate:#64748b;--line:#e2e8f0;--bg:#f1f5f9;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;}
   *{box-sizing:border-box}
@@ -54,6 +55,13 @@
   .legend{display:flex;gap:14px;font-size:11px;color:var(--slate);margin-top:8px;flex-wrap:wrap;align-items:center}
   .legend span{display:inline-flex;align-items:center;gap:5px}
   .dot{width:11px;height:11px;border-radius:2px;display:inline-block}
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+  .modal{background:#fff;border-radius:12px;padding:16px;width:390px;max-width:100%;max-height:86vh;overflow:auto;box-shadow:0 12px 44px rgba(0,0,0,.32)}
+  .modal-h{display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--navy);font-size:15px;margin-bottom:10px}
+  .modal-h .xbtn{background:none;border:none;cursor:pointer;color:#94a3b8;display:flex}
+  .modal-list{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow:auto;margin-top:4px}
+  .folder-row{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-size:13px;width:100%}
+  .folder-row:hover{background:#f8fafc;border-color:#cbd5e1}
   svg text{user-select:none}
   @media print{
     @page{margin:12mm;}
@@ -75,6 +83,24 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useRef, useMemo, useEffect, useReducer } = React;
+
+/* ===================== Google Drive ===================== */
+const GOOGLE_CLIENT_ID="PEGAR_TU_CLIENT_ID.apps.googleusercontent.com"; // <-- pegá tu Client ID de Google Cloud
+const DRIVE_FOLDER_ID="1GNPEGiKqqcUHwjhe6DzAWOyGKhf5OtpB";              // carpeta compartida raíz
+const DRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
+let _tok=null,_tokExp=0,_tokClient=null;
+const gisReady=()=>window.google&&google.accounts&&google.accounts.oauth2;
+function ensureToken(){return new Promise((res,rej)=>{
+  if(_tok&&Date.now()<_tokExp-60000){res(_tok);return;}
+  if(!gisReady()){rej(new Error("Google no cargó (probá desde el sitio publicado)"));return;}
+  if(!_tokClient)_tokClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:DRIVE_SCOPE,callback:()=>{}});
+  _tokClient.callback=(r)=>{if(r&&r.error){rej(new Error(r.error));return;}_tok=r.access_token;_tokExp=Date.now()+((r.expires_in||3600)*1000);res(_tok);};
+  _tokClient.requestAccessToken({prompt:_tok?"":"consent"});
+});}
+async function driveList(q){const t=await ensureToken();const u="https://www.googleapis.com/drive/v3/files?q="+encodeURIComponent(q)+"&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc&pageSize=200";const r=await fetch(u,{headers:{Authorization:"Bearer "+t}});if(!r.ok)throw new Error("listar "+r.status);return (await r.json()).files||[];}
+async function driveCreateFolder(name){const t=await ensureToken();const r=await fetch("https://www.googleapis.com/drive/v3/files?fields=id,name",{method:"POST",headers:{Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/vnd.google-apps.folder",parents:[DRIVE_FOLDER_ID]})});if(!r.ok)throw new Error("crear carpeta "+r.status);return await r.json();}
+async function driveUpload(folderId,filename,content){const t=await ensureToken();const b="plano"+Date.now();const body="--"+b+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify({name:filename,parents:[folderId]})+"\r\n--"+b+"\r\nContent-Type: application/json\r\n\r\n"+content+"\r\n--"+b+"--";const r=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name",{method:"POST",headers:{Authorization:"Bearer "+t,"Content-Type":"multipart/related; boundary="+b},body});if(!r.ok)throw new Error("subir "+r.status);return await r.json();}
+async function driveDownload(id){const t=await ensureToken();const r=await fetch("https://www.googleapis.com/drive/v3/files/"+id+"?alt=media",{headers:{Authorization:"Bearer "+t}});if(!r.ok)throw new Error("bajar "+r.status);return await r.text();}
 
 const CAT = {
   redonda_180:     { nm:"Redonda Ø1,80 (12p)",        forma:"circ", d:1.80,         fill:"#dbeafe", stroke:"#2563eb", cat:"Mesas", sillas:12 },
@@ -143,6 +169,10 @@ function App(){
   const [comboIdx,setComboIdx]=useState(SALONES.girasoles.combos.length-1);
   const combo=S.combos[comboIdx]||S.combos[S.combos.length-1];
   const [off,setOff]=useState(0);
+  const [drive,setDrive]=useState(null);
+  const [driveBusy,setDriveBusy]=useState(false);
+  const [form,setForm]=useState({fecha:"",tipo:"Boda",nombre:""});
+  const [planName,setPlanName]=useState("");
   const [room,setRoom]=useState({w:SALONES.girasoles.w,l:SALONES.girasoles.total});
   const [els,setEls]=useState([]);
   const [selIds,setSelIds]=useState([]);
@@ -157,7 +187,7 @@ function App(){
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
-  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null);
+  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null), fileRef=useRef(null);
   const elsRef=useRef(els); elsRef.current=els;
   const histRef=useRef({past:[],future:[]});
   const [,force]=useReducer(x=>x+1,0);
@@ -325,6 +355,55 @@ function App(){
   function guardar(){const n=name.trim();if(!n){flash("Poné un nombre.");return;}const all=store.read();all[n]={salonKey,comboIdx,off,room,els,gen};store.write(all);setSaved(Object.keys(all));flash("Guardado: "+n);}
   function cargar(n){const d=store.read()[n];if(!d)return;pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
   function borrar(n){const all=store.read();delete all[n];store.write(all);setSaved(Object.keys(all));}
+  function descargarArchivo(){
+    const obj={v:1,salonKey,comboIdx,off,room,els,gen};
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:"application/json"}));
+    const nm=(name.trim()||S.nombre).replace(/[^\w\-áéíóúñ ]/gi,"").trim()||"plano";
+    a.download=nm+".plano.json"; a.click();
+    flash("Archivo descargado");
+  }
+  function abrirArchivo(e){
+    const file=e.target.files[0]; if(!file)return;
+    const rd=new FileReader();
+    rd.onload=()=>{try{const d=JSON.parse(rd.result);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(file.name.replace(/\.plano\.json$|\.json$/i,""));flash("Plano cargado: "+file.name);}catch(err){flash("Archivo inválido.");}};
+    rd.readAsText(file); e.target.value="";
+  }
+  const planObj=()=>({v:1,salonKey,comboIdx,off,room,els,gen});
+  const cfgFalta=()=>GOOGLE_CLIENT_ID.indexOf("PEGAR")===0;
+  async function driveListFolders(mode){
+    if(cfgFalta()){flash("Falta configurar el Client ID de Google (ver instrucciones).");return;}
+    setDriveBusy(true);
+    try{const folders=await driveList("'"+DRIVE_FOLDER_ID+"' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");setDrive({mode,folders});}
+    catch(e){flash("Drive: "+e.message);}
+    setDriveBusy(false);
+  }
+  function nombreCarpeta(){const p=(form.fecha||"").split("-");const fch=p.length===3?p[0].slice(2)+"."+p[1]+"."+p[2]:"";return [fch,form.tipo,form.nombre.trim()].filter(Boolean).join(" - ");}
+  async function saveToFolder(folder){
+    setDriveBusy(true);
+    try{const fn=(planName.trim()||name.trim()||"Plano")+".plano.json";await driveUpload(folder.id,fn,JSON.stringify(planObj(),null,2));flash("Guardado en Drive: "+folder.name+" / "+fn);setDrive(null);setPlanName("");}
+    catch(e){flash("Error al guardar: "+e.message);}
+    setDriveBusy(false);
+  }
+  async function createAndSave(){
+    if(!form.fecha||!form.nombre.trim()){flash("Completá fecha y protagonista.");return;}
+    setDriveBusy(true);
+    try{const folder=await driveCreateFolder(nombreCarpeta());const fn=(planName.trim()||name.trim()||"Plano")+".plano.json";await driveUpload(folder.id,fn,JSON.stringify(planObj(),null,2));flash("Carpeta creada y plano guardado");setDrive(null);setPlanName("");}
+    catch(e){flash("Error: "+e.message);}
+    setDriveBusy(false);
+  }
+  async function openFolderFiles(folder){
+    setDriveBusy(true);
+    try{const files=await driveList("'"+folder.id+"' in parents and trashed=false");setDrive({mode:"openFiles",folder,files,folders:drive.folders});}
+    catch(e){flash("Drive: "+e.message);}
+    setDriveBusy(false);
+  }
+  async function loadDriveFile(f){
+    setDriveBusy(true);
+    try{const txt=await driveDownload(f.id);const d=JSON.parse(txt);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(f.name.replace(/\.plano\.json$|\.json$/i,""));flash("Cargado: "+f.name);setDrive(null);}
+    catch(e){flash("Error al abrir: "+e.message);}
+    setDriveBusy(false);
+  }
 
   function exportPNG(){
     const node=svgRef.current.cloneNode(true);
@@ -484,10 +563,65 @@ function App(){
           <div className="card-h">Guardar evento</div>
           <div style={{display:"flex",gap:6}}><input className="f" style={{flex:1,fontSize:12,padding:"6px 8px",border:"1px solid #cbd5e1",borderRadius:6}} value={name} onChange={e=>setName(e.target.value)} placeholder="Ej: Casamiento 12/07"/><button className="btn btn-primary" onClick={guardar}><Ic d={I.save} s={15}/></button></div>
           {saved.map(n=><div className="saved-item" key={n}><button style={{color:"#1e3a5f"}} onClick={()=>cargar(n)}><Ic d={I.folder} s={13}/> {n}</button><button style={{color:"#94a3b8"}} onClick={()=>borrar(n)}><Ic d={I.x} s={13}/></button></div>)}
-          <div className="muted">Los eventos se guardan en este navegador.</div>
+          <div className="muted">Guardado rápido en este navegador.</div>
+          <div className="sec-h" style={{marginTop:12}}>Archivo editable (compartible)</div>
+          <div style={{display:"flex",gap:6}}>
+            <button className="btn btn-block" onClick={descargarArchivo}><Ic d={I.download} s={14}/> Descargar plano</button>
+            <button className="btn btn-block" onClick={()=>fileRef.current&&fileRef.current.click()}><Ic d={I.folder} s={14}/> Abrir plano</button>
+          </div>
+          <input ref={fileRef} type="file" accept=".json,application/json" onChange={abrirArchivo} style={{display:"none"}}/>
+          <div className="muted">Descarga un archivo .json editable que podés guardar a mano en Drive y reabrir con "Abrir plano".</div>
+          <div className="sec-h" style={{marginTop:12}}>Drive del equipo</div>
+          <div style={{display:"flex",gap:6}}>
+            <button className="btn btn-primary btn-block" onClick={()=>driveListFolders("saveList")} disabled={driveBusy}><Ic d={I.save} s={14}/> Guardar en Drive</button>
+            <button className="btn btn-block" onClick={()=>driveListFolders("openList")} disabled={driveBusy}><Ic d={I.folder} s={14}/> Abrir de Drive</button>
+          </div>
+          <div className="muted">Guarda y abre planos directo en la carpeta compartida, una carpeta por evento.</div>
         </div>
       </div>
     </div>
+    {drive&&<div className="modal-bg" onClick={()=>!driveBusy&&setDrive(null)}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-h">
+          <span>{drive.mode==="saveList"?"Guardar plano en Drive":drive.mode==="saveForm"?"Nueva carpeta de evento":drive.mode==="openFiles"?("Planos · "+drive.folder.name):"Abrir plano de Drive"}</span>
+          <button className="xbtn" onClick={()=>setDrive(null)}><Ic d={I.x} s={16}/></button>
+        </div>
+        {driveBusy&&<div className="muted" style={{marginBottom:6}}>Conectando con Drive…</div>}
+        {drive.mode==="saveList"&&<div>
+          <label className="f">Nombre del plano<input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="Ej: Opción A — salón completo"/></label>
+          <div className="sec-h" style={{marginTop:10}}>Elegí la carpeta del evento</div>
+          <div className="modal-list">
+            {drive.folders.length===0&&<div className="muted">Todavía no hay carpetas de evento.</div>}
+            {drive.folders.map(f=><button key={f.id} className="folder-row" disabled={driveBusy} onClick={()=>saveToFolder(f)}><Ic d={I.folder} s={14}/> {f.name}</button>)}
+          </div>
+          <button className="btn btn-primary btn-block" style={{marginTop:10}} onClick={()=>setDrive({...drive,mode:"saveForm"})}>＋ Crear carpeta nueva</button>
+        </div>}
+        {drive.mode==="saveForm"&&<div>
+          <label className="f">Fecha del evento<input type="date" value={form.fecha} onChange={e=>setForm({...form,fecha:e.target.value})}/></label>
+          <label className="f" style={{marginTop:8}}>Tipo de evento<select value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}>{["Fiesta de 15","Boda","Cumpleaños","Bar / Bat Mitzvá","Evento"].map(t=><option key={t} value={t}>{t}</option>)}</select></label>
+          <label className="f" style={{marginTop:8}}>Nombre protagonista/s<input value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})} placeholder="Ej: Sofía / Mateo y Lucía"/></label>
+          <label className="f" style={{marginTop:8}}>Nombre del plano<input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="Ej: Opción A"/></label>
+          <div className="muted" style={{marginTop:6}}>Carpeta: <b>{nombreCarpeta()||"(completá los datos)"}</b></div>
+          <div style={{display:"flex",gap:6,marginTop:10}}>
+            <button className="btn" onClick={()=>setDrive({...drive,mode:"saveList"})}>← Volver</button>
+            <button className="btn btn-primary btn-block" disabled={driveBusy} onClick={createAndSave}>Crear y guardar</button>
+          </div>
+        </div>}
+        {drive.mode==="openList"&&<div>
+          <div className="modal-list">
+            {drive.folders.length===0&&<div className="muted">Todavía no hay carpetas de evento.</div>}
+            {drive.folders.map(f=><button key={f.id} className="folder-row" disabled={driveBusy} onClick={()=>openFolderFiles(f)}><Ic d={I.folder} s={14}/> {f.name}</button>)}
+          </div>
+        </div>}
+        {drive.mode==="openFiles"&&<div>
+          <button className="btn" style={{marginBottom:8}} onClick={()=>setDrive({mode:"openList",folders:drive.folders})}>← Carpetas</button>
+          <div className="modal-list">
+            {drive.files.filter(f=>/\.json$/i.test(f.name)).length===0&&<div className="muted">No hay planos en esta carpeta.</div>}
+            {drive.files.filter(f=>/\.json$/i.test(f.name)).map(f=><button key={f.id} className="folder-row" disabled={driveBusy} onClick={()=>loadDriveFile(f)}><Ic d={I.folder} s={14}/> {f.name}</button>)}
+          </div>
+        </div>}
+      </div>
+    </div>}
     {toast&&<div className="toast">{toast}</div>}
   </div>;
 }

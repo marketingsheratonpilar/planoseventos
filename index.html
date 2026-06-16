@@ -62,6 +62,10 @@
   .modal-list{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow:auto;margin-top:4px}
   .folder-row{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-size:13px;width:100%}
   .folder-row:hover{background:#f8fafc;border-color:#cbd5e1}
+  .row-del{display:flex;gap:5px;align-items:stretch}
+  .del-btn{background:#fff;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:0 9px;cursor:pointer;display:flex;align-items:center}
+  .del-btn:hover{background:#fef2f2;border-color:#dc2626}
+  .del-btn:disabled{opacity:.5;cursor:default}
   svg text{user-select:none}
   @media print{
     @page{margin:12mm;}
@@ -94,6 +98,11 @@ async function sheetAll(){
 async function sheetSave(rec){
   const r=await fetch(SHEET_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"save",...rec})});
   if(!r.ok)throw new Error("guardar "+r.status);
+  return await r.json();
+}
+async function sheetDelete(evento,plano){
+  const r=await fetch(SHEET_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"delete",evento,plano:plano||null})});
+  if(!r.ok)throw new Error("eliminar "+r.status);
   return await r.json();
 }
 
@@ -171,6 +180,7 @@ function App(){
   const [driveBusy,setDriveBusy]=useState(false);
   const [form,setForm]=useState({fecha:"",tipo:"Boda",nombre:""});
   const [planName,setPlanName]=useState("");
+  const [doc,setDoc]=useState(null);
   const [room,setRoom]=useState({w:SALONES.girasoles.w,l:SALONES.girasoles.total});
   const [els,setEls]=useState([]);
   const [selIds,setSelIds]=useState([]);
@@ -212,8 +222,8 @@ function App(){
   }
   useEffect(()=>{fitScale();},[salonKey,comboIdx,horiz,W,L]);
   useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[horiz,W,L]);
-  function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);flash(S.nombre+" · "+c.label);}
-  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);flash("Salón: "+sa.nombre);}
+  function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash(S.nombre+" · "+c.label);}
+  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
 
   // ---- historial ----
   function pushHist(){const h=histRef.current;h.past.push(elsRef.current);if(h.past.length>120)h.past.shift();h.future=[];force();}
@@ -481,14 +491,14 @@ function App(){
   function nombreCarpeta(){const p=(form.fecha||"").split("-");const fch=p.length===3?p[0].slice(2)+"."+p[1]+"."+p[2]:"";return [fch,form.tipo,form.nombre.trim()].filter(Boolean).join(" - ");}
   async function saveToFolder(evento){
     setDriveBusy(true);
-    try{const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:"",tipo:"",prota:"",data:JSON.stringify(planObj())});flash("Plano guardado en "+evento);setDrive(null);}
+    try{const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:"",tipo:"",prota:"",data:JSON.stringify(planObj())});const meta=(drive.rows||[]).filter(r=>r.evento===evento).find(r=>r.tipo||r.fecha||r.prota)||{};setDoc({evento,plano,fecha:meta.fecha||"",tipo:meta.tipo||"",prota:meta.prota||""});flash("Plano guardado en "+evento);setDrive(null);}
     catch(e){flash("No se pudo guardar. Reintentá.");}
     setDriveBusy(false);
   }
   async function createAndSave(){
     if(!form.fecha||!form.nombre.trim()){flash("Completá fecha y protagonista.");return;}
     setDriveBusy(true);
-    try{const evento=nombreCarpeta();const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:form.fecha,tipo:form.tipo,prota:form.nombre.trim(),data:JSON.stringify(planObj())});flash("Evento creado y plano guardado");setDrive(null);setForm({fecha:"",tipo:"Boda",nombre:""});}
+    try{const evento=nombreCarpeta();const plano=(planName.trim()||defaultPlanName());await sheetSave({evento,plano,fecha:form.fecha,tipo:form.tipo,prota:form.nombre.trim(),data:JSON.stringify(planObj())});setDoc({evento,plano,fecha:form.fecha,tipo:form.tipo,prota:form.nombre.trim()});flash("Evento creado y plano guardado");setDrive(null);setForm({fecha:"",tipo:"Boda",nombre:""});}
     catch(e){flash("No se pudo guardar. Reintentá.");}
     setDriveBusy(false);
   }
@@ -497,8 +507,32 @@ function App(){
     setDrive({mode:"openFiles",evento,plans,rows:drive.rows,eventos:drive.eventos});
   }
   function loadDriveFile(row){
-    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");flash("Plano abierto: "+row.plano);setDrive(null);}
+    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");
+      const meta=(drive.rows||[]).filter(r=>r.evento===row.evento).find(r=>r.tipo||r.fecha||r.prota)||{};
+      setDoc({evento:row.evento,plano:row.plano,fecha:row.fecha||meta.fecha||"",tipo:row.tipo||meta.tipo||"",prota:row.prota||meta.prota||""});
+      flash("Plano abierto: "+row.plano);setDrive(null);}
     catch(e){flash("No se pudo abrir el plano.");}
+  }
+  async function borrarEvento(ev){
+    if(!window.confirm(`¿Eliminar el evento "${ev}" y TODOS sus planos? Esta acción no se puede deshacer.`))return;
+    setDriveBusy(true);
+    try{await sheetDelete(ev,null);const {rows,eventos}=await fetchRows();setDrive(d=>({...d,rows,eventos}));if(doc&&doc.evento===ev)setDoc(null);flash("Evento eliminado.");}
+    catch(e){flash("No se pudo eliminar.");}
+    setDriveBusy(false);
+  }
+  async function borrarPlano(ev,plano){
+    if(!window.confirm(`¿Eliminar el plano "${plano}"? Esta acción no se puede deshacer.`))return;
+    setDriveBusy(true);
+    try{await sheetDelete(ev,plano);const {rows,eventos}=await fetchRows();const plans=rows.filter(r=>r.evento===ev);setDrive(d=>plans.length?{...d,rows,eventos,plans}:{mode:"openList",rows,eventos});if(doc&&doc.evento===ev&&doc.plano===plano)setDoc(null);flash("Plano eliminado.");}
+    catch(e){flash("No se pudo eliminar.");}
+    setDriveBusy(false);
+  }
+  async function guardarCambios(){
+    if(!doc)return;
+    setDriveBusy(true);
+    try{await sheetSave({evento:doc.evento,plano:doc.plano,fecha:doc.fecha||"",tipo:doc.tipo||"",prota:doc.prota||"",data:JSON.stringify(planObj())});flash("Cambios guardados en “"+doc.plano+"”.");}
+    catch(e){flash("No se pudo guardar.");}
+    setDriveBusy(false);
   }
 
   function exportPNG(){
@@ -529,7 +563,7 @@ function App(){
     else if(e.tipo==="escenario"||e.tipo==="pista"){const f=e.tipo==="escenario"?"#fed7aa":"#bbf7d0",st=e.tipo==="escenario"?"#ea580c":"#16a34a";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={f} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}<text textAnchor="middle" dominantBaseline="central" fontSize={e.tipo==="escenario"?Math.min(13,e.w*scale*0.16):11} fontWeight="700" fill={st} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.tipo==="escenario"?"ESCENARIO":"PISTA"}</text></g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
-    else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale;a.push(<rect key={r+"_"+ci} x={x} y={y} width={SEAT*scale} height={SEAT*scale} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={.7}/>);}inner=<g>{a}</g>;}
+    else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#4338ca" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
     else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?<text textAnchor="middle" dominantBaseline="central" fontSize={Math.min(0.5*scale,e.h*scale*0.5)} fontWeight="700" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>BARRA</text>:null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
     const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
@@ -585,7 +619,7 @@ function App(){
             <NumF label="Escen. cols" v={gen.escCols} min={0} on={n=>setGen({...gen,escCols:n})}/>
             <NumF label="Escen. filas" v={gen.escRows} min={0} on={n=>setGen({...gen,escRows:n})}/>
             {gen.modo==="mesas"&&<NumF label="Barras" v={gen.barras} min={0} on={n=>setGen({...gen,barras:n})}/>}
-            <label className="f">Enteladar todo<select value={gen.entelar?"si":"no"} onChange={e=>setGen({...gen,entelar:e.target.value==="si"})}><option value="no">No</option><option value="si">Sí</option></select></label>
+            <label className="f">Entelar todo<select value={gen.entelar?"si":"no"} onChange={e=>setGen({...gen,entelar:e.target.value==="si"})}><option value="no">No</option><option value="si">Sí</option></select></label>
           </div>
           {gen.modo==="mesas"&&<div className="muted">Pista: {fmt(gen.pistaCols*1.2)}×{fmt(gen.pistaRows*1.2)} m · ~{gen.pistaCols*gen.pistaRows*3} personas en pista</div>}
           {gen.modo==="sillas"&&<div className="muted">Las sillas se generan como un bloque editable que mira al escenario. Tocá el bloque para ajustar filas, columnas y pasillos.</div>}
@@ -680,6 +714,13 @@ function App(){
           {Object.keys(counts).length===0?<div className="muted">Sin elementos.</div>:
           <div>{Object.entries(counts).map(([k,n])=><div className="row" key={k}><span style={{color:"#475569"}}>{labelTipo(k)}</span><span className="v">{n}</span></div>)}{cubiertos>0&&<div className="row" style={{borderTop:"1px solid #eef2f7",marginTop:5,paddingTop:5}}><span style={{color:"#475569",fontWeight:600}}>Cubiertos totales</span><span className="v" style={{fontWeight:700}}>{cubiertos}</span></div>}</div>}
         </div>
+        {doc&&<div className="card" style={{borderLeft:"3px solid #1e3a5f"}}>
+          <div className="card-h">Plano abierto</div>
+          <div style={{fontSize:14,fontWeight:700,color:"#1e3a5f"}}>{doc.plano}</div>
+          <div className="muted" style={{marginTop:2}}>{doc.evento}</div>
+          {(doc.tipo||doc.prota)&&<div className="muted">{[doc.tipo,doc.prota].filter(Boolean).join(" · ")}</div>}
+          <button className="btn btn-primary btn-block" style={{marginTop:8}} disabled={driveBusy} onClick={guardarCambios}><Ic d={I.save} s={14}/> Guardar cambios</button>
+        </div>}
         <div className="card">
           <div className="card-h">Planos</div>
           <div style={{display:"flex",gap:6}}>
@@ -722,14 +763,14 @@ function App(){
         {drive.mode==="openList"&&<div>
           <div className="modal-list">
             {drive.eventos.length===0&&<div className="muted">Todavía no hay eventos guardados.</div>}
-            {drive.eventos.map(ev=><button key={ev} className="folder-row" disabled={driveBusy} onClick={()=>openFolderFiles(ev)}><Ic d={I.folder} s={14}/> {ev}</button>)}
+            {drive.eventos.map(ev=><div key={ev} className="row-del"><button className="folder-row" style={{flex:1}} disabled={driveBusy} onClick={()=>openFolderFiles(ev)}><Ic d={I.folder} s={14}/> {ev}</button><button className="del-btn" title="Eliminar evento" disabled={driveBusy} onClick={()=>borrarEvento(ev)}><Ic d={I.trash} s={14}/></button></div>)}
           </div>
         </div>}
         {drive.mode==="openFiles"&&<div>
           <button className="btn" style={{marginBottom:8}} onClick={()=>setDrive({mode:"openList",rows:drive.rows,eventos:drive.eventos})}>← Eventos</button>
           <div className="modal-list">
             {drive.plans.length===0&&<div className="muted">No hay planos en este evento.</div>}
-            {drive.plans.map((row,i)=><button key={i} className="folder-row" disabled={driveBusy} onClick={()=>loadDriveFile(row)}><Ic d={I.folder} s={14}/> {row.plano}</button>)}
+            {drive.plans.map((row,i)=><div key={i} className="row-del"><button className="folder-row" style={{flex:1}} disabled={driveBusy} onClick={()=>loadDriveFile(row)}><Ic d={I.folder} s={14}/> {row.plano}</button><button className="del-btn" title="Eliminar plano" disabled={driveBusy} onClick={()=>borrarPlano(drive.evento,row.plano)}><Ic d={I.trash} s={14}/></button></div>)}
           </div>
         </div>}
       </div>

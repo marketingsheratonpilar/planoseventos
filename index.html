@@ -43,6 +43,7 @@
   .pal .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pal .pl{color:#94a3b8;flex:0 0 auto;font-weight:700}
   .toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;color:var(--slate)}
+  .tb-sep{width:1px;height:18px;background:var(--line);margin:0 2px;display:inline-block}
   .tb{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 9px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer}
   .tb:hover{background:#f8fafc}.tb:disabled{opacity:.4;cursor:default}.tb.on{color:var(--navy);border-color:#c7d2e0}.tb.off{color:#cbd5e1}
   .canvas-box{background:#fff;border:1px solid var(--line);border-radius:10px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.05);max-width:100%}
@@ -111,6 +112,9 @@ const CAT = {
   silla:           { nm:"Silla 0,50×0,50",            forma:"rect", w:0.50, h:0.50, fill:"#e5e7eb", stroke:"#6b7280", cat:"Otros" },
 };
 const MOD_ESC={w:2.44,h:1.80}, MOD_PISTA={w:1.20,h:1.20};
+const SEAT=0.5, SGX=0.12, SGY=0.20;
+function audColsX(cols,aisles,aw){const groups=(aisles||0)+1;const cpg=Math.ceil(cols/groups);const xs=[];for(let i=0;i<cols;i++){const g=Math.floor(i/cpg);xs.push(i*(SEAT+SGX)+g*aw);}return xs;}
+function audDims(cols,rows,aisles,aw){const xs=audColsX(cols,aisles,aw);const w=xs.length?xs[xs.length-1]+SEAT:SEAT;const h=rows*SEAT+(rows-1)*SGY;return {w,h};}
 const MESA_OPTS=["redonda_180","redonda_150","cuadrada_090","escuela_244x075","escuela_244x045","escuela_180x045","espejada_244x090"];
 const SALONES={
   girasoles:{nombre:"Los Girasoles",w:21.64,total:43.44,divThick:0.1,
@@ -152,7 +156,7 @@ const PAD=46;
 const memStore={};
 const store={read(){try{return JSON.parse(localStorage.getItem("girasoles_layouts")||"{}");}catch(e){return memStore.d||{};}},write(o){try{localStorage.setItem("girasoles_layouts",JSON.stringify(o));}catch(e){memStore.d=o;}}};
 
-const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",undo:"M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",redo:"M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3"};
+const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",undo:"M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",redo:"M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3",alignX:"M12 2v20M8 7h8v4H8zM6 15h12v4H6z",alignY:"M2 12h20M7 8v8h4V8zM15 6v12h4V6z",distX:"M4 4v16M20 4v16M10 8h4v8h-4z",distY:"M4 4h16M4 20h16M8 10v4h8v-4z",group:"M4 4h6v6H4zM14 14h6v6h-6zM7 10v4M10 7h4",ungroup:"M4 4h5v5H4zM15 15h5v5h-5M9 6h3M6 9v3"};
 const Ic=({d,s=16})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
 function NumF({label,v,on,step=1,min}){return(<label className="f">{label}<input type="number" value={v} step={step} onChange={e=>{let n=+e.target.value;if(min!=null)n=Math.max(min,n);on(n);}}/></label>);}
 function Pal({onClick,nm,sw,dash,wavy}){return(<button className="pal" onClick={onClick}><span className="sw" style={wavy?{}:(dash?{border:`2px dashed ${sw}`}:{background:sw+"33",border:`1.5px solid ${sw}`})}>{wavy&&<svg width="15" height="15" viewBox="0 0 15 15"><path d="M0 8 Q3.75 3 7.5 8 T15 8" fill="none" stroke={sw} strokeWidth="1.6"/></svg>}</span><span className="nm">{nm}</span><span className="pl">+</span></button>);}
@@ -177,7 +181,7 @@ function App(){
   const [showSillas,setShowSillas]=useState(true);
   const [horiz,setHoriz]=useState(true);
   const [marquee,setMarquee]=useState(null);
-  const [gen,setGen]=useState({tipoMesa:"redonda_180",mesas:24,apoyo:8,pistaCols:8,pistaRows:8,escCols:4,escRows:2,pared:"arriba",barras:4,entelar:false});
+  const [gen,setGen]=useState({modo:"mesas",tipoMesa:"redonda_180",mesas:24,apoyo:8,pistaCols:8,pistaRows:8,escCols:4,escRows:2,pared:"arriba",barras:4,entelar:false,sillasCant:120,pasillos:2});
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
@@ -220,6 +224,7 @@ function App(){
     const id=uid(); const x=ex.x??W/2, y=ex.y??L/2;
     if(tipo==="escenario"){const c=ex.cols??gen.escCols,r=ex.rows??gen.escRows;return{id,tipo,x,y,rot:ex.rot??0,cols:c,rows:r,w:c*MOD_ESC.w,h:r*MOD_ESC.h,modW:MOD_ESC.w,modH:MOD_ESC.h};}
     if(tipo==="pista"){const c=ex.cols??gen.pistaCols,r=ex.rows??gen.pistaRows;return{id,tipo,x,y,rot:0,cols:c,rows:r,w:c*MOD_PISTA.w,h:r*MOD_PISTA.h,modW:MOD_PISTA.w,modH:MOD_PISTA.h};}
+    if(tipo==="auditorio"){const cols=ex.cols??10,rows=ex.rows??6,aisles=ex.aisles??1,aw=ex.aisleW??1.2;const d=audDims(cols,rows,aisles,aw);return{id,tipo,x,y,rot:ex.rot??0,cols,rows,aisles,aisleW:aw,w:d.w,h:d.h};}
     if(tipo==="aereo"){return{id,tipo,x,y,rot:0,w:ex.w??4,h:ex.h??4};}
     if(tipo==="entelado"){return{id,tipo,x,y,rot:ex.rot??0,w:ex.w??5,h:0.3};}
     if(tipo==="texto"){const t=ex.text||"Texto";return{id,tipo,x,y,rot:ex.rot??0,text:t,w:Math.max(1,t.length*0.28),h:0.6};}
@@ -241,6 +246,18 @@ function App(){
     const avg=sel.reduce((a,e)=>a+e[axis],0)/sel.length;
     setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,[axis]:avg}:e));
   }
+  function groupDistribute(axis){
+    if(selIds.length<3)return;
+    pushHist();
+    const sel=elsRef.current.filter(e=>selIds.includes(e.id)).sort((a,b)=>a[axis]-b[axis]);
+    const min=sel[0][axis],max=sel[sel.length-1][axis],step=(max-min)/(sel.length-1),pos={};
+    sel.forEach((e,i)=>pos[e.id]=min+step*i);
+    setEls(p=>p.map(e=>pos[e.id]!=null?{...e,[axis]:pos[e.id]}:e));
+  }
+  const selGrouped=()=>{const sel=els.filter(e=>selIds.includes(e.id));return sel.length>0&&sel.every(e=>e.grp&&e.grp===sel[0].grp);};
+  function agrupar(){if(selIds.length<2)return;const g="g"+Date.now();pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,grp:g}:e));}
+  function desagrupar(){pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,grp:undefined}:e));}
+  function updAud(id,patch){pushHist();setEls(p=>p.map(e=>{if(e.id!==id)return e;const m={...e,...patch};const d=audDims(m.cols,m.rows,m.aisles,m.aisleW);return {...m,w:d.w,h:d.h};}));}
   const upd=(id,patch)=>setEls(p=>p.map(e=>e.id===id?{...e,...patch}:e));
   const updH=(id,patch)=>{pushHist();upd(id,patch);};
   const rotOne=(id,d)=>{const e=els.find(x=>x.id===id);if(!e)return;updH(id,{rot:((e.rot||0)+d)%360});};
@@ -260,9 +277,12 @@ function App(){
   // ---- arrastre (individual o grupo) ----
   function down(e,id){
     e.stopPropagation();
-    if(e.shiftKey){setSelIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);return;}
+    const clk=elsRef.current.find(el=>el.id===id);
+    const grpIds=clk&&clk.grp?elsRef.current.filter(el=>el.grp===clk.grp).map(el=>el.id):null;
+    if(e.shiftKey){setSelIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,...(grpIds||[id])]);return;}
     let ids;
-    if(selIds.includes(id)&&selIds.length>1)ids=selIds; else {ids=[id];setSelIds([id]);}
+    if(grpIds){ids=grpIds;setSelIds(grpIds);}
+    else if(selIds.includes(id)&&selIds.length>1)ids=selIds; else {ids=[id];setSelIds([id]);}
     pushHist();
     const starts={}; elsRef.current.forEach(el=>{if(ids.includes(el.id))starts[el.id]={x:el.x,y:el.y};});
     drag.current={ids,sx:e.clientX,sy:e.clientY,starts};
@@ -301,10 +321,17 @@ function App(){
     function k(ev){
       const typing=["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName);
       if((ev.metaKey||ev.ctrlKey)&&(ev.key==="z"||ev.key==="Z")){ev.preventDefault();ev.shiftKey?redo():undo();return;}
-      if((ev.key==="Delete"||ev.key==="Backspace")&&selIds.length&&!typing){ev.preventDefault();pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);}
+      if((ev.key==="Delete"||ev.key==="Backspace")&&selIds.length&&!typing){ev.preventDefault();pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);return;}
+      if(ev.key.startsWith("Arrow")&&selIds.length&&!typing){
+        ev.preventDefault();
+        const step=ev.shiftKey?0.05:0.25; let dx=0,dy=0;
+        if(horiz){if(ev.key==="ArrowUp")dx=step;else if(ev.key==="ArrowDown")dx=-step;else if(ev.key==="ArrowRight")dy=step;else dy=-step;}
+        else{if(ev.key==="ArrowUp")dy=-step;else if(ev.key==="ArrowDown")dy=step;else if(ev.key==="ArrowRight")dx=step;else dx=-step;}
+        pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,x:Math.max(0,Math.min(W,e.x+dx)),y:Math.max(0,Math.min(L,e.y+dy))}:e));
+      }
     }
     window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);
-  },[selIds,horiz]);
+  },[selIds,horiz,W,L]);
 
   function generar(){
     const out=[]; const m=1.3;
@@ -320,6 +347,41 @@ function App(){
       else if(gen.pared==="izquierda"){sx=m+sFW/2;sy=L/2;}
       else{sx=W-m-sFW/2;sy=L/2;}
       out.push(mk("escenario",{x:sx,y:sy,cols:gen.escCols,rows:gen.escRows,rot:vert?90:0}));
+    }
+    const chairRot={arriba:0,abajo:180,izquierda:90,derecha:270};
+    function entelarTodo(arr){
+      const ins=0.25,pad=0.12;
+      ["top","bottom","left","right"].forEach(wall=>{
+        if(wall==="top"&&combo.from!==1)return;
+        if(wall==="bottom"&&combo.to!==S.sections.length)return;
+        const isH=wall==="top"||wall==="bottom",total=isH?W:L,gaps=[];
+        S.doors.green.forEach(d=>{if(d[0]!==wall)return;let p;if(isH){if(d[1]>W)return;p=d[1];}else{p=d[1]-off;if(p<-0.01||p>total+0.01)return;}gaps.push([p-d[2]/2,p+d[2]/2]);});
+        gaps.sort((a,b)=>a[0]-b[0]);
+        let cur=0;const segs=[];
+        gaps.forEach(g=>{const s=Math.max(0,g[0]-pad),e=Math.min(total,g[1]+pad);if(s>cur+0.3)segs.push([cur,s]);cur=Math.max(cur,e);});
+        if(cur<total-0.3)segs.push([cur,total]);
+        segs.forEach(([a,b])=>{const len=b-a,cen=(a+b)/2;if(len<0.4)return;
+          if(wall==="top")arr.push(mk("entelado",{x:cen,y:ins,w:len,rot:0}));
+          else if(wall==="bottom")arr.push(mk("entelado",{x:cen,y:L-ins,w:len,rot:0}));
+          else if(wall==="left")arr.push(mk("entelado",{x:ins,y:cen,w:len,rot:90}));
+          else arr.push(mk("entelado",{x:W-ins,y:cen,w:len,rot:90}));});
+      });
+    }
+
+    if(gen.modo==="sillas"){
+      const aisles=Math.max(0,gen.pasillos||0);
+      let availW,availD,cx,cy;
+      if(gen.pared==="arriba"){availW=W-2*m;availD=L-(hayEsc?sy+sFH/2:m)-m;cx=W/2;cy=(hayEsc?sy+sFH/2:m)+availD/2;}
+      else if(gen.pared==="abajo"){availW=W-2*m;availD=(hayEsc?sy-sFH/2:L-m)-m;cx=W/2;cy=m+availD/2;}
+      else if(gen.pared==="izquierda"){availW=L-2*m;availD=W-(hayEsc?sx+sFW/2:m)-m;cy=L/2;cx=(hayEsc?sx+sFW/2:m)+availD/2;}
+      else{availW=L-2*m;availD=(hayEsc?sx-sFW/2:W-m)-m;cy=L/2;cx=m+availD/2;}
+      const cols=Math.max(1,Math.floor((availW-aisles*1.2+0.12)/0.62));
+      const rows=Math.max(1,Math.ceil((gen.sillasCant||1)/cols));
+      const aud=mk("auditorio",{x:cx,y:cy,cols,rows,aisles,aisleW:1.2,rot:chairRot[gen.pared]});
+      out.push(aud);pushHist();setEls(out);setSelIds([aud.id]);
+      if(gen.entelar)entelarTodo(out),setEls([...out]);
+      flash(`Generadas ${cols*rows} sillas (${rows} filas × ${cols}).`);
+      return;
     }
 
     let pxc=W/2,pyc=L/2,pw=0,ph=0;
@@ -365,7 +427,8 @@ function App(){
     if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(baseX*f,baseY*f);pts=p;if(p.length<=gen.mesas)break;}}
     let chosen=pts;
     if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
-    chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y})));
+    const rotMesa=gen.tipoMesa.startsWith("escuela")?chairRot[gen.pared]:0;
+    chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y,rot:rotMesa})));
     const placed=chosen.length;
 
     for(let i=0;i<gen.apoyo;i++){
@@ -374,7 +437,7 @@ function App(){
       else{const step=(W-2*m)/(Math.ceil(gen.apoyo/2)+1);out.push(mk("redonda_075",{x:m+step*(k+1),y:first?m+.5:L-m-.5}));}
     }
     pushHist();setEls(out);setSelIds([]);
-    if(gen.entelar){const ins=0.25;out.push(mk("entelado",{x:W/2,y:ins,w:W,rot:0}));out.push(mk("entelado",{x:W/2,y:L-ins,w:W,rot:0}));out.push(mk("entelado",{x:ins,y:L/2,w:L,rot:90}));out.push(mk("entelado",{x:W-ins,y:L/2,w:L,rot:90}));setEls([...out]);}
+    if(gen.entelar){entelarTodo(out);setEls([...out]);}
     flash(`Generado: ${placed} mesas distribuidas${placed<gen.mesas?" (no entraron todas)":""}.`);
   }
   const limpiar=()=>{pushHist();setEls([]);setSelIds([]);};
@@ -466,10 +529,11 @@ function App(){
     else if(e.tipo==="escenario"||e.tipo==="pista"){const f=e.tipo==="escenario"?"#fed7aa":"#bbf7d0",st=e.tipo==="escenario"?"#ea580c":"#16a34a";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={f} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}<text textAnchor="middle" dominantBaseline="central" fontSize={e.tipo==="escenario"?Math.min(13,e.w*scale*0.16):11} fontWeight="700" fill={st} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.tipo==="escenario"?"ESCENARIO":"PISTA"}</text></g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
-    else if(e.tipo==="texto"){inner=<g><rect x={-e.w/2*scale} y={-0.3*scale} width={e.w*scale} height={0.6*scale} fill="transparent"/><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed" transform={`rotate(${TR-(e.rot||0)})`}>{e.text||"Texto"}</text></g>;}
+    else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale;a.push(<rect key={r+"_"+ci} x={x} y={y} width={SEAT*scale} height={SEAT*scale} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={.7}/>);}inner=<g>{a}</g>;}
+    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?<text textAnchor="middle" dominantBaseline="central" fontSize={Math.min(0.5*scale,e.h*scale*0.5)} fontWeight="700" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>BARRA</text>:null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
     const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
-    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
+    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
   function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="2 6"/>);}return <g>{a}</g>;}
@@ -505,19 +569,26 @@ function App(){
       <div className="col col-left">
         <div className="card">
           <div className="card-h"><Ic d={I.wand} s={15}/> Generador automático</div>
+          <label className="f" style={{marginBottom:8}}>Tipo de armado<select value={gen.modo} onChange={e=>setGen({...gen,modo:e.target.value})}><option value="mesas">Mesas</option><option value="sillas">Solo sillas (auditorio / ceremonia)</option></select></label>
           <div className="grid2">
+            {gen.modo==="mesas"?<>
             <label className="f">Tipo de mesa<select value={gen.tipoMesa} onChange={e=>setGen({...gen,tipoMesa:e.target.value})}>{MESA_OPTS.map(k=><option key={k} value={k}>{CAT[k].nm}</option>)}</select></label>
             <NumF label="Cant. mesas" v={gen.mesas} min={0} on={n=>setGen({...gen,mesas:n})}/>
             <NumF label="Mesas apoyo" v={gen.apoyo} min={0} on={n=>setGen({...gen,apoyo:n})}/>
+            </>:<>
+            <NumF label="Cant. sillas" v={gen.sillasCant} min={1} on={n=>setGen({...gen,sillasCant:n})}/>
+            <NumF label="Pasillos vert." v={gen.pasillos} min={0} on={n=>setGen({...gen,pasillos:n})}/>
+            </>}
             <label className="f">Escenario en<select value={gen.pared} onChange={e=>setGen({...gen,pared:e.target.value})}><option value="arriba">Pared Izquierda</option><option value="abajo">Pared Derecha</option><option value="izquierda">Pared Ingreso</option><option value="derecha">Pared Back</option></select></label>
-            <NumF label="Pista cols" v={gen.pistaCols} min={0} on={n=>setGen({...gen,pistaCols:n})}/>
-            <NumF label="Pista filas" v={gen.pistaRows} min={0} on={n=>setGen({...gen,pistaRows:n})}/>
+            {gen.modo==="mesas"&&<><NumF label="Pista cols" v={gen.pistaCols} min={0} on={n=>setGen({...gen,pistaCols:n})}/>
+            <NumF label="Pista filas" v={gen.pistaRows} min={0} on={n=>setGen({...gen,pistaRows:n})}/></>}
             <NumF label="Escen. cols" v={gen.escCols} min={0} on={n=>setGen({...gen,escCols:n})}/>
             <NumF label="Escen. filas" v={gen.escRows} min={0} on={n=>setGen({...gen,escRows:n})}/>
-            <NumF label="Barras" v={gen.barras} min={0} on={n=>setGen({...gen,barras:n})}/>
+            {gen.modo==="mesas"&&<NumF label="Barras" v={gen.barras} min={0} on={n=>setGen({...gen,barras:n})}/>}
             <label className="f">Enteladar todo<select value={gen.entelar?"si":"no"} onChange={e=>setGen({...gen,entelar:e.target.value==="si"})}><option value="no">No</option><option value="si">Sí</option></select></label>
           </div>
-          <div className="muted">Pista: {fmt(gen.pistaCols*1.2)}×{fmt(gen.pistaRows*1.2)} m · ~{gen.pistaCols*gen.pistaRows*3} personas en pista</div>
+          {gen.modo==="mesas"&&<div className="muted">Pista: {fmt(gen.pistaCols*1.2)}×{fmt(gen.pistaRows*1.2)} m · ~{gen.pistaCols*gen.pistaRows*3} personas en pista</div>}
+          {gen.modo==="sillas"&&<div className="muted">Las sillas se generan como un bloque editable que mira al escenario. Tocá el bloque para ajustar filas, columnas y pasillos.</div>}
           <button className="btn btn-primary btn-block btn-big" style={{marginTop:10}} onClick={generar}><Ic d={I.wand} s={16}/> Generar plano</button>
           <button className="btn btn-block" style={{marginTop:6}} onClick={limpiar}><Ic d={I.trash} s={14}/> Vaciar todo</button>
         </div>
@@ -542,7 +613,15 @@ function App(){
           <button className="tb" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={15}/></button>
           <button className="tb" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={15}/></button>
           <button className="tb on" onClick={()=>setHoriz(v=>!v)}><Ic d={I.flip} s={15}/> {horiz?"Horizontal":"Vertical"}</button>
-          {selIds.length>1&&<><button className="tb" title="Alinear los seleccionados en una columna (mismo centro horizontal)" onClick={()=>groupAlign("x")}>Centrar ↕</button><button className="tb" title="Alinear los seleccionados en una fila (mismo centro vertical)" onClick={()=>groupAlign("y")}>Centrar ↔</button></>}
+          {selIds.length>1&&<>
+            <span className="tb-sep"/>
+            <button className="tb" title="Centrar en el mismo eje vertical (igualar X)" onClick={()=>groupAlign("x")}><Ic d={I.alignX} s={15}/></button>
+            <button className="tb" title="Centrar en el mismo eje horizontal (igualar Y)" onClick={()=>groupAlign("y")}><Ic d={I.alignY} s={15}/></button>
+            <button className="tb" title="Distribuir con espacio uniforme (horizontal)" onClick={()=>groupDistribute("y")} disabled={selIds.length<3}><Ic d={I.distX} s={15}/></button>
+            <button className="tb" title="Distribuir con espacio uniforme (vertical)" onClick={()=>groupDistribute("x")} disabled={selIds.length<3}><Ic d={I.distY} s={15}/></button>
+            <button className="tb" title="Agrupar" onClick={agrupar}><Ic d={I.group} s={15}/></button>
+          </>}
+          {selGrouped()&&<button className="tb" title="Desagrupar" onClick={desagrupar}><Ic d={I.ungroup} s={15}/></button>}
           <button className={"tb "+(grid?"on":"off")} onClick={()=>setGrid(v=>!v)}><Ic d={I.grid} s={15}/> Grilla</button>
           <button className={"tb "+(showDoors?"on":"off")} onClick={()=>setShowDoors(v=>!v)}>Puertas</button>
           <button className={"tb "+(showSillas?"on":"off")} onClick={()=>setShowSillas(v=>!v)}><Ic d={I.eye} s={15}/> Sillas</button>
@@ -586,6 +665,7 @@ function App(){
               {esMesa(selEl.tipo)&&<NumF label="Sillas" v={selEl.sillas??0} min={0} on={n=>updH(selEl.id,{sillas:n})}/>}
               {["dj","parlante","aereo"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
               {selEl.tipo==="entelado"&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
+              {selEl.tipo==="auditorio"&&<><NumF label="Filas" v={selEl.rows} min={1} on={n=>updAud(selEl.id,{rows:n})}/><NumF label="Columnas" v={selEl.cols} min={1} on={n=>updAud(selEl.id,{cols:n})}/><NumF label="Pasillos" v={selEl.aisles} min={0} on={n=>updAud(selEl.id,{aisles:n})}/><NumF label="Pasillo (m)" v={r2(selEl.aisleW)} step={0.1} min={0.3} on={n=>updAud(selEl.id,{aisleW:n})}/></>}
             </div>
             <div style={{display:"flex",gap:6,marginTop:9,flexWrap:"wrap"}}>
               <button className="btn" onClick={()=>rotOne(selEl.id,90)}><Ic d={I.rotate} s={14}/> 90°</button>

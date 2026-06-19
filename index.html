@@ -107,18 +107,18 @@ async function sheetDelete(evento,plano){
 }
 
 const CAT = {
-  redonda_180:     { nm:"Redonda Ø1,80 (12p)",        forma:"circ", d:1.80,         fill:"#dbeafe", stroke:"#2563eb", cat:"Mesas", sillas:12, zona:3.0 },
-  redonda_150:     { nm:"Redonda Ø1,50 (10p)",        forma:"circ", d:1.50,         fill:"#dbeafe", stroke:"#1d4ed8", cat:"Mesas", sillas:10, zona:2.5 },
-  redonda_075:     { nm:"Apoyo Ø0,75",                forma:"circ", d:0.75,         fill:"#e0f2fe", stroke:"#0284c7", cat:"Mesas" },
-  cuadrada_090:    { nm:"Cuadrada 0,90×0,90",         forma:"rect", w:0.90, h:0.90, fill:"#dbeafe", stroke:"#2563eb", cat:"Mesas" },
-  escuela_180x045: { nm:"Escuela 1,80×0,45",          forma:"rect", w:1.80, h:0.45, fill:"#fef9c3", stroke:"#ca8a04", cat:"Mesas", sillas:3 },
-  escuela_244x045: { nm:"Escuela 2,44×0,45",          forma:"rect", w:2.44, h:0.45, fill:"#fef9c3", stroke:"#ca8a04", cat:"Mesas", sillas:4 },
-  escuela_244x075: { nm:"Escuela 2,44×0,75",          forma:"rect", w:2.44, h:0.75, fill:"#fef9c3", stroke:"#ca8a04", cat:"Mesas", sillas:4 },
-  espejada_244x090:{ nm:"Espejada / cabecera 2,44×0,90", forma:"rect", w:2.44, h:0.90, fill:"#f3e8ff", stroke:"#9333ea", cat:"Mesas" },
-  barra:           { nm:"Barra (módulo 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#fee2e2", stroke:"#dc2626", cat:"Servicio" },
-  dj:              { nm:"DJ (editable)",              forma:"rect", w:1.50, h:1.00, fill:"#fae8ff", stroke:"#c026d3", cat:"Técnica" },
-  parlante:        { nm:"Parlante (editable)",        forma:"rect", w:0.60, h:0.60, fill:"#374151", stroke:"#111827", cat:"Técnica" },
-  silla:           { nm:"Silla 0,50×0,50",            forma:"rect", w:0.50, h:0.50, fill:"#e0e7ff", stroke:"#6366f1", cat:"Otros" },
+  redonda_180:     { nm:"Redonda Ø1,80 (12p)",        forma:"circ", d:1.80,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:12, zona:3.0 },
+  redonda_150:     { nm:"Redonda Ø1,50 (10p)",        forma:"circ", d:1.50,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:10, zona:2.5 },
+  redonda_075:     { nm:"Apoyo Ø0,75",                forma:"circ", d:0.75,         fill:"#eceef1", stroke:"#6b7280", cat:"Mesas" },
+  cuadrada_090:    { nm:"Cuadrada 0,90×0,90",         forma:"rect", w:0.90, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
+  escuela_180x045: { nm:"Escuela 1,80×0,45",          forma:"rect", w:1.80, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:3 },
+  escuela_244x045: { nm:"Escuela 2,44×0,45",          forma:"rect", w:2.44, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
+  escuela_244x075: { nm:"Escuela 2,44×0,75",          forma:"rect", w:2.44, h:0.75, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
+  espejada_244x090:{ nm:"Espejada / cabecera 2,44×0,90", forma:"rect", w:2.44, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
+  barra:           { nm:"Barra (módulo 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Servicio" },
+  dj:              { nm:"DJ (editable)",              forma:"rect", w:1.50, h:1.00, fill:"#e5e7eb", stroke:"#6b7280", cat:"Técnica" },
+  parlante:        { nm:"Parlante (editable)",        forma:"rect", w:0.60, h:0.60, fill:"#9ca3af", stroke:"#4b5563", cat:"Técnica" },
+  silla:           { nm:"Silla 0,50×0,50",            forma:"rect", w:0.50, h:0.50, fill:"#e5e7eb", stroke:"#6b7280", cat:"Otros" },
 };
 const MOD_ESC={w:2.44,h:1.80}, MOD_PISTA={w:1.20,h:1.20};
 const SEAT=0.5, SGX=0.10, SGY=0.50;
@@ -139,7 +139,7 @@ const SALONES={
     doors:{green:[["top",5.38,2.12,2.65],["top",8.67,2.12,2.65],["left",6.91,4.46,2.65],["left",21.60,4.46,2.65],["left",36.29,4.46,2.65]],
            red:[["right",6.90,2.13],["right",21.59,2.13],["right",36.28,2.13]],
            porton:[["top",12.42,3.20,3.0]]},
-    alturas:{base:4.10, centro:6, insets:{ext:1.5, mid:2.6, viga:3.5}, vigaKg:"100 kg/m lineal"}},
+    alturas:{centro:"6", lateral:"4,10", violeta:{ing:1.5,back:1.5,side:1.5}, naranja:{ing:2.6,back:2.6,side:2.6}, viga:{inset:3.5, kg:"100 kg/m lineal"}}},
   alamos:{nombre:"Los Álamos",w:13.15,total:29.49,divThick:0.1,
     sections:[[0,7.32],[7.42,14.70],[14.80,22.08],[22.18,29.49]],
     combos:[
@@ -154,8 +154,11 @@ const SALONES={
       {label:"Secciones 3 y 4",from:3,to:4},
       {label:"Completo (1-4)",from:1,to:4},
     ],
-    doors:{green:[["left",5.58,2.00],["left",8.98,2.00],["left",20.39,2.00],["left",23.80,2.00]],
-           red:[["right",1.42,2.13],["right",8.78,2.11],["right",16.13,2.11],["right",23.59,2.13]]}},
+    doors:{green:[["left",5.69,2.00,2.65],["left",9.03,2.00,2.65],["left",20.46,2.00,2.65],["left",23.80,2.00,2.65]],
+           red:[["right",1.42,2.13],["right",8.78,2.11],["right",16.13,2.11],["right",23.59,2.13]],
+           porton:null},
+    irregular:{wall:"left", depth:0.67, notches:[[3.34,11.38],[18.11,26.15]]},
+    alturas:{centro:"4,3", lateral:"3,6", violeta:{ing:1.57,back:0.9,side:0.8}, naranja:{ing:2.17,back:1.5,side:1.3}}},
 };
 
 let _id=1; const uid=()=>"e"+(_id++);
@@ -193,7 +196,7 @@ function App(){
   const [showSillas,setShowSillas]=useState(true);
   const [showMargen,setShowMargen]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
-  const [horiz,setHoriz]=useState(true);
+  const [rot,setRot]=useState(270);
   const [marquee,setMarquee]=useState(null);
   const [gen,setGen]=useState({modo:"mesas",tipoMesa:"redonda_180",mesas:24,apoyo:8,pistaCols:8,pistaRows:8,escCols:4,escRows:2,pared:"arriba",barras:4,entelar:false,sillasFilas:8,sillasCols:14,pasillos:2});
   const [name,setName]=useState("");
@@ -206,8 +209,9 @@ function App(){
 
   const W=room.w, L=room.l;
   const contentW=PAD*2+W*scale, contentH=PAD*2+L*scale+30;
-  const svgW=horiz?contentH:contentW, svgH=horiz?contentW:contentH;
-  const gT=horiz?`translate(0,${contentW}) rotate(-90)`:"";
+  const hh=(rot===0||rot===180);
+  const svgW=hh?contentW:contentH, svgH=hh?contentH:contentW;
+  const gT=rot===0?"":rot===90?`translate(${contentH},0) rotate(90)`:rot===180?`translate(${contentW},${contentH}) rotate(180)`:`translate(0,${contentW}) rotate(270)`;
   const px=m=>PAD+m*scale;
   const selEl=selIds.length===1?els.find(e=>e.id===selIds[0]):null;
 
@@ -217,15 +221,15 @@ function App(){
     const el=centerRef.current; if(!el)return;
     const availW=el.clientWidth-24;
     const availH=Math.max(320,window.innerHeight-210);
-    const dimW=horiz?L:W, dimH=horiz?W:L;
-    const extraW=horiz?30:0, extraH=horiz?0:30;
+    const dimW=hh?W:L, dimH=hh?L:W;
+    const extraW=hh?0:30, extraH=hh?30:0;
     const sW=(availW-2*PAD-extraW)/dimW, sH=(availH-2*PAD-extraH)/dimH;
     let s=Math.min(sW,sH);
     if(!isFinite(s)||s<=0)return;
     setScale(Math.max(7,Math.min(40,Math.floor(s))));
   }
-  useEffect(()=>{fitScale();},[salonKey,comboIdx,horiz,W,L]);
-  useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[horiz,W,L]);
+  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L]);
+  useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[rot,W,L]);
   function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash(S.nombre+" · "+c.label);}
   function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
 
@@ -284,7 +288,11 @@ function App(){
     const rect=svgRef.current.getBoundingClientRect();
     const kx=svgW/rect.width, ky=svgH/rect.height;
     const sx=(clientX-rect.left)*kx, sy=(clientY-rect.top)*ky;
-    let cx,cy; if(horiz){cx=contentW-sy;cy=sx;}else{cx=sx;cy=sy;}
+    let cx,cy;
+    if(rot===0){cx=sx;cy=sy;}
+    else if(rot===90){cx=sy;cy=contentH-sx;}
+    else if(rot===180){cx=contentW-sx;cy=contentH-sy;}
+    else{cx=contentW-sy;cy=sx;}
     return {x:(cx-PAD)/scale,y:(cy-PAD)/scale};
   }
 
@@ -310,8 +318,9 @@ function App(){
   }
   function move(e){
     if(drag.current){
-      const d=drag.current; let dx,dy;
-      if(horiz){dx=-(e.clientY-d.sy)/scale;dy=(e.clientX-d.sx)/scale;}else{dx=(e.clientX-d.sx)/scale;dy=(e.clientY-d.sy)/scale;}
+      const d=drag.current;
+      const p0=screenToRoom(d.sx,d.sy), p1=screenToRoom(e.clientX,e.clientY);
+      const dx=p1.x-p0.x, dy=p1.y-p0.y;
       setEls(p=>p.map(el=>{if(d.starts[el.id]){let nx=snap(d.starts[el.id].x+dx,imn),ny=snap(d.starts[el.id].y+dy,imn);return{...el,x:Math.max(0,Math.min(W,nx)),y:Math.max(0,Math.min(L,ny))};}return el;}));
     } else if(marqRef.current){
       const p=screenToRoom(e.clientX,e.clientY);
@@ -338,14 +347,19 @@ function App(){
       if((ev.key==="Delete"||ev.key==="Backspace")&&selIds.length&&!typing){ev.preventDefault();pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);return;}
       if(ev.key.startsWith("Arrow")&&selIds.length&&!typing){
         ev.preventDefault();
-        const step=ev.shiftKey?0.05:0.25; let dx=0,dy=0;
-        if(horiz){if(ev.key==="ArrowUp")dx=step;else if(ev.key==="ArrowDown")dx=-step;else if(ev.key==="ArrowRight")dy=step;else dy=-step;}
-        else{if(ev.key==="ArrowUp")dy=-step;else if(ev.key==="ArrowDown")dy=step;else if(ev.key==="ArrowRight")dx=step;else dx=-step;}
+        const step=ev.shiftKey?0.05:0.25;
+        const rv={0:[1,0],90:[0,-1],180:[-1,0],270:[0,1]}[rot];
+        const dv={0:[0,1],90:[1,0],180:[0,-1],270:[-1,0]}[rot];
+        let dx=0,dy=0;
+        if(ev.key==="ArrowRight"){dx=rv[0]*step;dy=rv[1]*step;}
+        else if(ev.key==="ArrowLeft"){dx=-rv[0]*step;dy=-rv[1]*step;}
+        else if(ev.key==="ArrowDown"){dx=dv[0]*step;dy=dv[1]*step;}
+        else{dx=-dv[0]*step;dy=-dv[1]*step;}
         pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,x:Math.max(0,Math.min(W,e.x+dx)),y:Math.max(0,Math.min(L,e.y+dy))}:e));
       }
     }
     window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);
-  },[selIds,horiz,W,L]);
+  },[selIds,rot,W,L]);
 
   function generar(){
     const out=[]; const m=1.3;
@@ -557,20 +571,28 @@ function App(){
   const esMesa=t=>CAT[t]&&CAT[t].cat==="Mesas"&&t!=="redonda_075";
   const cubiertos=useMemo(()=>{let t=0;els.forEach(e=>{if(esMesa(e.tipo))t+=(e.sillas||0);else if(e.tipo==="auditorio")t+=(e.cols||0)*(e.rows||0);else if(e.tipo==="silla")t+=1;});return t;},[els]);
 
-  const TR=horiz?90:0;
+  const TR=(360-rot)%360;
   function sillasR(d,n){const r=(d/2+0.32)*scale,s=0.5*scale,a=[];for(let i=0;i<n;i++){const ang=(i/n)*Math.PI*2,cx=Math.cos(ang)*r,cy=Math.sin(ang)*r;a.push(<rect key={i} x={cx-s/2} y={cy-s/2} width={s} height={s} rx={2} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={.8} transform={`rotate(${ang*180/Math.PI+90} ${cx} ${cy})`}/>);}return a;}
   function sillasRect(e,n){const s=0.5*scale,gap=0.10*scale,a=[];const y=(e.h/2)*scale+gap+s/2;const span=e.w*scale;for(let i=0;i<n;i++){const cx=-span/2+span*(i+0.5)/n;a.push(<rect key={i} x={cx-s/2} y={y-s/2} width={s} height={s} rx={2} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={.8}/>);}return a;}
   function numText(e,c){if(e.num==null||e.num==="")return null;const fs=c.forma==="circ"?e.d*scale*0.5:Math.min(e.h*scale*0.85,e.w*scale*0.5);return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="800" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.num}</text>;}
   function modulos(e){const a=[];for(let c=1;c<e.cols;c++){const x=-e.w/2*scale+c*e.modW*scale;a.push(<line key={"v"+c} x1={x} y1={-e.h/2*scale} x2={x} y2={e.h/2*scale} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}for(let r=1;r<e.rows;r++){const y=-e.h/2*scale+r*e.modH*scale;a.push(<line key={"h"+r} x1={-e.w/2*scale} y1={y} x2={e.w/2*scale} y2={y} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}return a;}
   function enteladoPath(e){const len=e.w*scale,amp=0.2*scale,waves=Math.max(2,Math.round(e.w/0.7)),steps=waves*10;let d="M "+(-len/2)+" 0";for(let i=1;i<=steps;i++){const x=-len/2+(i/steps)*len,y=Math.sin((i/steps)*waves*2*Math.PI)*amp;d+=" L "+x.toFixed(1)+" "+y.toFixed(1);}return d;}
 
+  function wordLabel(txt,e,color){
+    const lo=Math.max(e.w,e.h),sh=Math.min(e.w,e.h);
+    let fs=Math.min(sh*scale*0.6, lo*scale*0.92/Math.max(1,txt.length*0.6));
+    fs=Math.max(6,Math.min(fs,15));
+    const tot=(((e.rot||0)+rot)%360+360)%360;
+    const tall=(tot%180===0)?(e.h>e.w):(e.w>e.h);
+    return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="700" fill={color} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)+(tall?90:0)})`}>{txt}</text>;
+  }
   function renderEl(e){
     const isS=selIds.includes(e.id), c=CAT[e.tipo]; let inner;
     if(c&&c.forma==="circ"){inner=<g>{showMargen&&c.zona&&<circle r={c.zona/2*scale} fill="#94a3b8" opacity={0.10} stroke="#94a3b8" strokeWidth={0.8} strokeDasharray="3 4"/>}{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,c)}</g>;}
-    else if(e.tipo==="escenario"||e.tipo==="pista"){const f=e.tipo==="escenario"?"#fed7aa":"#bbf7d0",st=e.tipo==="escenario"?"#ea580c":"#16a34a";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={f} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}<text textAnchor="middle" dominantBaseline="central" fontSize={e.tipo==="escenario"?Math.min(13,e.w*scale*0.16):11} fontWeight="700" fill={st} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.tipo==="escenario"?"ESCENARIO":"PISTA"}</text></g>;}
+    else if(e.tipo==="escenario"||e.tipo==="pista"){const st="#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="#e5e7eb" stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{wordLabel(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
-    else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#4338ca" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
+    else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
     else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#4338ca" strokeWidth={1.8}/></g>;}
     else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?<text textAnchor="middle" dominantBaseline="central" fontSize={Math.min(0.5*scale,e.h*scale*0.5)} fontWeight="700" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>BARRA</text>:null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
@@ -579,10 +601,25 @@ function App(){
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
   function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="2 6"/>);}return <g>{a}</g>;}
+  function roomOutline(){
+    const irr=S.irregular;
+    if(!irr||irr.wall!=="left")return `M${px(0)} ${px(0)} L${px(W)} ${px(0)} L${px(W)} ${px(L)} L${px(0)} ${px(L)} Z`;
+    const d=irr.depth,y0=off,y1=off+L;
+    let bounds=[y0];
+    irr.notches.forEach(n=>{if(n[0]>y0&&n[0]<y1)bounds.push(n[0]);if(n[1]>y0&&n[1]<y1)bounds.push(n[1]);});
+    bounds.push(y1);bounds=[...new Set(bounds)].sort((a,b)=>a-b);
+    const xAt=yy=>irr.notches.some(n=>yy>=n[0]&&yy<=n[1])?d:0;
+    let pts=[];
+    for(let k=0;k<bounds.length-1;k++){const x=xAt((bounds[k]+bounds[k+1])/2);pts.push([x,bounds[k]-off]);pts.push([x,bounds[k+1]-off]);}
+    let p=`M${px(pts[0][0])} ${px(pts[0][1])}`;
+    for(let k=1;k<pts.length;k++)p+=` L${px(pts[k][0])} ${px(pts[k][1])}`;
+    p+=` L${px(W)} ${px(L)} L${px(W)} ${px(0)} Z`;
+    return p;
+  }
   function doorSeg(wall,pos,w,color,key){
     if(wall==="top"){if(combo.from!==1||pos>W)return null;return <line key={key} x1={px(pos-w/2)} y1={px(0)} x2={px(pos+w/2)} y2={px(0)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
     if(wall==="bottom"){if(combo.to!==S.sections.length||pos>W)return null;return <line key={key} x1={px(pos-w/2)} y1={px(L)} x2={px(pos+w/2)} y2={px(L)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
-    if(wall==="left"){const y=pos-off;if(y<-0.01||y>L+0.01)return null;return <line key={key} x1={px(0)} y1={px(y-w/2)} x2={px(0)} y2={px(y+w/2)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
+    if(wall==="left"){const y=pos-off;if(y<-0.01||y>L+0.01)return null;const xw=(S.irregular&&S.irregular.wall==="left"&&S.irregular.notches.some(n=>pos>=n[0]&&pos<=n[1]))?S.irregular.depth:0;return <line key={key} x1={px(xw)} y1={px(y-w/2)} x2={px(xw)} y2={px(y+w/2)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;}
     const y=pos-off;if(y<-0.01||y>L+0.01)return null;return <line key={key} x1={px(W)} y1={px(y-w/2)} x2={px(W)} y2={px(y+w/2)} stroke={color} strokeWidth={5} strokeLinecap="round"/>;
   }
   function puertas(){
@@ -594,14 +631,24 @@ function App(){
   }
   function alturas(){
     if(!showAlturas||!S.alturas)return null;
-    const A=S.alturas,a=[],ie=A.insets.ext,im=A.insets.mid,iv=A.insets.viga;
+    const A=S.alturas,a=[],V=A.violeta,N=A.naranja,irr=S.irregular;
+    const secOuter=(aTop,aBot)=>{
+      if(!irr||irr.wall!=="left")return `M${px(0)} ${px(aTop-off)} L${px(W)} ${px(aTop-off)} L${px(W)} ${px(aBot-off)} L${px(0)} ${px(aBot-off)} Z`;
+      const d=irr.depth;let bs=[aTop];irr.notches.forEach(n=>{if(n[0]>aTop&&n[0]<aBot)bs.push(n[0]);if(n[1]>aTop&&n[1]<aBot)bs.push(n[1]);});bs.push(aBot);bs=[...new Set(bs)].sort((x,y)=>x-y);
+      const xAt=yy=>irr.notches.some(n=>yy>=n[0]&&yy<=n[1])?d:0;let pts=[];
+      for(let k=0;k<bs.length-1;k++){const x=xAt((bs[k]+bs[k+1])/2);pts.push([x,bs[k]]);pts.push([x,bs[k+1]]);}
+      let p=`M${px(pts[0][0])} ${px(pts[0][1]-off)}`;for(let k=1;k<pts.length;k++)p+=` L${px(pts[k][0])} ${px(pts[k][1]-off)}`;
+      p+=` L${px(W)} ${px(aBot-off)} L${px(W)} ${px(aTop-off)} Z`;return p;
+    };
+    const rectD=(c,aTop,aBot)=>{const x1=c.ing,x2=W-c.back,y1=aTop+c.side-off,y2=aBot-c.side-off;return `M${px(x1)} ${px(y1)} L${px(x2)} ${px(y1)} L${px(x2)} ${px(y2)} L${px(x1)} ${px(y2)} Z`;};
     for(let i=combo.from-1;i<=combo.to-1;i++){
-      const top=S.sections[i][0]-off, bot=S.sections[i][1]-off;
-      const out=`M${px(0)} ${px(top)} L${px(W)} ${px(top)} L${px(W)} ${px(bot)} L${px(0)} ${px(bot)} Z`;
-      const inn=`M${px(ie)} ${px(top+ie)} L${px(W-ie)} ${px(top+ie)} L${px(W-ie)} ${px(bot-ie)} L${px(ie)} ${px(bot-ie)} Z`;
-      a.push(<path key={"v"+i} d={out+" "+inn} fillRule="evenodd" fill="#c4b5fd" opacity={0.35} stroke="#a78bfa" strokeWidth={0.6}/>);
-      a.push(<rect key={"n"+i} x={px(im)} y={px(top+im)} width={(W-2*im)*scale} height={(bot-top-2*im)*scale} fill="#fdba74" opacity={0.30} stroke="#fb923c" strokeWidth={0.8}/>);
-      a.push(<rect key={"g"+i} x={px(iv)} y={px(top+iv)} width={(W-2*iv)*scale} height={(bot-top-2*iv)*scale} fill="none" stroke="#111827" strokeWidth={1}/>);
+      const aTop=S.sections[i][0], aBot=S.sections[i][1];
+      const mag=rectD(V,aTop,aBot), nar=rectD(N,aTop,aBot);
+      a.push(<path key={"vf"+i} d={secOuter(aTop,aBot)+" "+mag} fillRule="evenodd" fill="#c4b5fd" opacity={0.35} stroke="none"/>);
+      a.push(<path key={"vr"+i} d={mag} fill="none" stroke="#a78bfa" strokeWidth={0.6}/>);
+      a.push(<path key={"nf"+i} d={nar} fill="#fdba74" opacity={0.30} stroke="none"/>);
+      a.push(<path key={"nr"+i} d={nar} fill="none" stroke="#fb923c" strokeWidth={0.8}/>);
+      if(A.viga){const iv=A.viga.inset;a.push(<rect key={"g"+i} x={px(iv)} y={px(aTop+iv-off)} width={(W-2*iv)*scale} height={(aBot-aTop-2*iv)*scale} fill="none" stroke="#111827" strokeWidth={1}/>);}
     }
     return <g style={{pointerEvents:"none"}}>{a}</g>;
   }
@@ -669,13 +716,13 @@ function App(){
           <button className="tb" title="Rehacer" disabled={!histRef.current.future.length} onClick={redo}><Ic d={I.redo} s={15}/></button>
           <button className="tb" title="Zoom In" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={15}/></button>
           <button className="tb" title="Zoom Out" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={15}/></button>
-          <button className="tb on" title="Cambiar orientación" onClick={()=>setHoriz(v=>!v)}><Ic d={I.flip} s={15}/> {horiz?"Horizontal":"Vertical"}</button>
+          <button className="tb" title="Girar la vista 90°" onClick={()=>setRot(r=>(r+90)%360)}><Ic d={I.rotate} s={15}/> 90°</button>
           {selIds.length>1&&<>
             <span className="tb-sep"/>
-            <button className="tb" title="Alineación Horizontal" onClick={()=>groupAlign(horiz?"x":"y")}><Ic d={I.alignY} s={15}/></button>
-            <button className="tb" title="Alineación Vertical" onClick={()=>groupAlign(horiz?"y":"x")}><Ic d={I.alignX} s={15}/></button>
-            <button className="tb" title="Distribuir Horizontal" onClick={()=>groupDistribute(horiz?"y":"x")} disabled={selIds.length<3}><Ic d={I.distX} s={15}/></button>
-            <button className="tb" title="Distribuir Vertical" onClick={()=>groupDistribute(horiz?"x":"y")} disabled={selIds.length<3}><Ic d={I.distY} s={15}/></button>
+            <button className="tb" title="Alineación Horizontal" onClick={()=>groupAlign(hh?"y":"x")}><Ic d={I.alignY} s={15}/></button>
+            <button className="tb" title="Alineación Vertical" onClick={()=>groupAlign(hh?"x":"y")}><Ic d={I.alignX} s={15}/></button>
+            <button className="tb" title="Distribuir Horizontal" onClick={()=>groupDistribute(hh?"x":"y")} disabled={selIds.length<3}><Ic d={I.distX} s={15}/></button>
+            <button className="tb" title="Distribuir Vertical" onClick={()=>groupDistribute(hh?"y":"x")} disabled={selIds.length<3}><Ic d={I.distY} s={15}/></button>
             <button className="tb" title="Agrupar los elementos seleccionados" onClick={agrupar}><Ic d={I.group} s={15}/> Agrupar</button>
           </>}
           {selGrouped()&&<button className="tb" title="Desagrupar" onClick={desagrupar}><Ic d={I.ungroup} s={15}/> Desagrupar</button>}
@@ -689,7 +736,7 @@ function App(){
         <div className="canvas-box">
           <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={svgDown} style={{touchAction:"none",maxWidth:"none"}}>
             <g transform={gT}>
-              <rect x={px(0)} y={px(0)} width={W*scale} height={L*scale} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
+              <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
               {gridLines()}{divisorias()}{els.map(renderEl)}{puertas()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
             </g>
@@ -697,11 +744,11 @@ function App(){
         </div>
         <div className="legend">
           <span><span className="dot" style={{background:"#16a34a"}}></span> Ingresos{showAlturas&&" (altura 2,65 m)"}</span>
-          <span><span className="dot" style={{background:"#0e7490"}}></span> Portón{showAlturas&&" (3,20 m ancho × 3 m alto)"}</span>
+          {S.doors.porton&&<span><span className="dot" style={{background:"#0e7490"}}></span> Portón{showAlturas&&" (3,20 m ancho × 3 m alto)"}</span>}
           <span><span className="dot" style={{background:"#dc2626"}}></span> Ingreso Back</span>
           <span><span className="dot" style={{background:"#f59e0b"}}></span> Puertas Divisorias</span>
           <span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>
-          {showAlturas&&<><span><span className="dot" style={{background:"#fdba74"}}></span> Altura 6 m</span><span><span className="dot" style={{background:"#c4b5fd"}}></span> Altura 4,10 m</span><span><span className="dot" style={{background:"#111827",borderRadius:0}}></span> Viga (aguanta 100 kg por metro lineal)</span></>}
+          {showAlturas&&S.alturas&&<><span><span className="dot" style={{background:"#fdba74"}}></span> Altura {S.alturas.centro} m</span><span><span className="dot" style={{background:"#c4b5fd"}}></span> Altura {S.alturas.lateral} m</span>{S.alturas.viga&&<span><span className="dot" style={{background:"#111827",borderRadius:0}}></span> Viga (aguanta 100 kg por metro lineal)</span>}</>}
           <span>Salón: {fmt(W)} × {fmt(L)} m · {fmt(W*L)} m²</span>
         </div>
         <div className="muted" style={{marginTop:4}}>SHIFT+clic para sumar a la selección, o dibujá un recuadro sobre varios. ⌘Z deshacer · ⌘⇧Z rehacer.</div>

@@ -789,11 +789,11 @@ function App(){
           {Object.keys(counts).length===0?<div className="muted">Sin elementos.</div>:
           <div>{Object.entries(counts).map(([k,n])=><div className="row" key={k}><span style={{color:"#475569"}}>{labelTipo(k)}</span><span className="v">{n}</span></div>)}{cubiertos>0&&<div className="row" style={{borderTop:"1px solid #eef2f7",marginTop:5,paddingTop:5}}><span style={{color:"#475569",fontWeight:600}}>Cubiertos totales</span><span className="v" style={{fontWeight:700}}>{cubiertos}</span></div>}</div>}
         </div>
-        {doc&&<div className="card" style={{borderLeft:"3px solid #1e3a5f"}}>
+        {doc&&<div className="card" style={{borderLeft:"3px solid #1e3a5f",position:"relative"}}>
+          <button title="Cerrar plano abierto" onClick={()=>setDoc(null)} style={{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",color:"#94a3b8",padding:2,lineHeight:0}}><Ic d={I.x} s={16}/></button>
           <div className="card-h">Plano abierto</div>
           <div style={{fontSize:14,fontWeight:700,color:"#1e3a5f"}}>{doc.plano}</div>
           <div className="muted" style={{marginTop:2}}>{doc.evento}</div>
-          {(doc.tipo||doc.prota)&&<div className="muted">{[doc.tipo,doc.prota].filter(Boolean).join(" · ")}</div>}
           <button className="btn btn-primary btn-block" style={{marginTop:8}} disabled={driveBusy} onClick={guardarCambios}><Ic d={I.save} s={14}/> Guardar cambios</button>
         </div>}
         <div className="card">

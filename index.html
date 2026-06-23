@@ -594,8 +594,8 @@ function App(){
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
     else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
-    else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e0e7ff" stroke="#6366f1" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#4338ca" strokeWidth={1.8}/></g>;}
-    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?<text textAnchor="middle" dominantBaseline="central" fontSize={Math.min(0.5*scale,e.h*scale*0.5)} fontWeight="700" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>BARRA</text>:null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
+    else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
+    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?wordLabel("DJ",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
     const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
     return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
@@ -644,9 +644,9 @@ function App(){
     for(let i=combo.from-1;i<=combo.to-1;i++){
       const aTop=S.sections[i][0], aBot=S.sections[i][1];
       const mag=rectD(V,aTop,aBot), nar=rectD(N,aTop,aBot);
-      a.push(<path key={"vf"+i} d={secOuter(aTop,aBot)+" "+mag} fillRule="evenodd" fill="#c4b5fd" opacity={0.35} stroke="none"/>);
+      a.push(<path key={"vf"+i} d={secOuter(aTop,aBot)+" "+mag} fillRule="evenodd" fill="#c4b5fd" opacity={0.22} stroke="none"/>);
       a.push(<path key={"vr"+i} d={mag} fill="none" stroke="#a78bfa" strokeWidth={0.6}/>);
-      a.push(<path key={"nf"+i} d={nar} fill="#fdba74" opacity={0.30} stroke="none"/>);
+      a.push(<path key={"nf"+i} d={nar} fill="#fdba74" opacity={0.18} stroke="none"/>);
       a.push(<path key={"nr"+i} d={nar} fill="none" stroke="#fb923c" strokeWidth={0.8}/>);
       if(A.viga){const iv=A.viga.inset;a.push(<rect key={"g"+i} x={px(iv)} y={px(aTop+iv-off)} width={(W-2*iv)*scale} height={(aBot-aTop-2*iv)*scale} fill="none" stroke="#111827" strokeWidth={1}/>);}
     }

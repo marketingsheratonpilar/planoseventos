@@ -89,7 +89,7 @@
 const { useState, useRef, useMemo, useEffect, useReducer } = React;
 
 /* ===================== Base compartida: Google Sheets vía Apps Script ===================== */
-const SHEET_API_URL="https://script.google.com/macros/s/AKfycbyygpsAARwv8XYFbyOoIfPLdYVqmDQYjhhLnVqXQaRs0QBFllGaxCqXFR6LjTPjMcFyfA/exec";
+const SHEET_API_URL="https://script.google.com/macros/s/AKfycbzV4JwZz4P6E0dyvUrU6MuwdMvO08Fe3OaspSQPfysu-0K2xSES8REbE5WYnSoQQ20NCQ/exec";
 async function sheetAll(){
   const r=await fetch(SHEET_API_URL+"?action=list&t="+Date.now());
   if(!r.ok)throw new Error("listar "+r.status);

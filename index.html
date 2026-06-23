@@ -107,18 +107,20 @@ async function sheetDelete(evento,plano){
 }
 
 const CAT = {
-  redonda_180:     { nm:"Redonda Ø1,80 (12p)",        forma:"circ", d:1.80,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:12, zona:3.0 },
-  redonda_150:     { nm:"Redonda Ø1,50 (10p)",        forma:"circ", d:1.50,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:10, zona:2.5 },
+  redonda_180:     { nm:"Redonda Ø1,80",        forma:"circ", d:1.80,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:12, zona:3.0 },
+  redonda_150:     { nm:"Redonda Ø1,50",        forma:"circ", d:1.50,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:10, zona:2.5 },
   redonda_075:     { nm:"Apoyo Ø0,75",                forma:"circ", d:0.75,         fill:"#eceef1", stroke:"#6b7280", cat:"Mesas" },
   cuadrada_090:    { nm:"Cuadrada 0,90×0,90",         forma:"rect", w:0.90, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
   escuela_180x045: { nm:"Escuela 1,80×0,45",          forma:"rect", w:1.80, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:3 },
   escuela_244x045: { nm:"Escuela 2,44×0,45",          forma:"rect", w:2.44, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
   escuela_244x075: { nm:"Escuela 2,44×0,75",          forma:"rect", w:2.44, h:0.75, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
   espejada_244x090:{ nm:"Espejada / cabecera 2,44×0,90", forma:"rect", w:2.44, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
-  barra:           { nm:"Barra (módulo 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Servicio" },
+  barra:           { nm:"Barra (mod. 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Servicio" },
   dj:              { nm:"DJ (editable)",              forma:"rect", w:1.50, h:1.00, fill:"#e5e7eb", stroke:"#6b7280", cat:"Técnica" },
   parlante:        { nm:"Parlante (editable)",        forma:"rect", w:0.60, h:0.60, fill:"#9ca3af", stroke:"#4b5563", cat:"Técnica" },
+  pantalla:        { nm:"Pantalla (editable)",        forma:"rect", w:3.00, h:0.20, fill:"#e5e7eb", stroke:"#6b7280", cat:"Técnica" },
   silla:           { nm:"Silla 0,50×0,50",            forma:"rect", w:0.50, h:0.50, fill:"#e5e7eb", stroke:"#6b7280", cat:"Otros" },
+  escalera:        { nm:"Escalera 0,90×0,45",         forma:"rect", w:0.90, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Otros" },
 };
 const MOD_ESC={w:2.44,h:1.80}, MOD_PISTA={w:1.20,h:1.20};
 const SEAT=0.5, SGX=0.10, SGY=0.50;
@@ -173,6 +175,7 @@ const store={read(){try{return JSON.parse(localStorage.getItem("girasoles_layout
 const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",undo:"M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",redo:"M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3",alignX:"M12 2v20M8 7h8v4H8zM6 15h12v4H6z",alignY:"M2 12h20M7 8v8h4V8zM15 6v12h4V6z",distX:"M4 4v16M20 4v16M10 8h4v8h-4z",distY:"M4 4h16M4 20h16M8 10v4h8v-4z",group:"M4 4h6v6H4zM14 14h6v6h-6zM7 10v4M10 7h4",ungroup:"M4 4h5v5H4zM15 15h5v5h-5M9 6h3M6 9v3"};
 const Ic=({d,s=16})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
 function NumF({label,v,on,step=1,min}){return(<label className="f">{label}<input type="number" value={v} step={step} onChange={e=>{let n=+e.target.value;if(min!=null)n=Math.max(min,n);on(n);}}/></label>);}
+function StdF({label,size,mod,on}){const ex=size/mod;const std=Math.abs(ex-Math.round(ex))<0.01;return(<label className="f">{label}<input type="text" inputMode="numeric" value={std?String(Math.round(ex)):"-"} onChange={e=>{const n=parseInt(e.target.value,10);if(!isNaN(n)&&n>=0)on(n);}}/></label>);}
 function Pal({onClick,nm,sw,dash,wavy,chair}){return(<button className="pal" onClick={onClick}><span className="sw" style={(wavy||chair)?{}:(dash?{border:`2px dashed ${sw}`}:{background:sw+"33",border:`1.5px solid ${sw}`})}>{wavy&&<svg width="15" height="15" viewBox="0 0 15 15"><path d="M0 8 Q3.75 3 7.5 8 T15 8" fill="none" stroke={sw} strokeWidth="1.6"/></svg>}{chair&&<svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="1.5" fill={sw+"33"} stroke={sw} strokeWidth="1.2"/><line x1="2" y1="12" x2="12" y2="12" stroke={sw} strokeWidth="2.2"/></svg>}</span><span className="nm">{nm}</span><span className="pl">+</span></button>);}
 
 function App(){
@@ -194,11 +197,10 @@ function App(){
   const [grid,setGrid]=useState(true);
   const [showDoors,setShowDoors]=useState(true);
   const [showSillas,setShowSillas]=useState(true);
-  const [showMargen,setShowMargen]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
   const [marquee,setMarquee]=useState(null);
-  const [gen,setGen]=useState({modo:"mesas",tipoMesa:"redonda_180",mesas:24,apoyo:8,pistaCols:8,pistaRows:8,escCols:4,escRows:2,pared:"arriba",barras:4,entelar:false,sillasFilas:8,sillasCols:14,pasillos:2});
+  const [gen,setGen]=useState({modo:"mesas",tipoMesa:"redonda_180",mesas:0,apoyo:0,pistaCols:0,pistaRows:0,escCols:0,escRows:0,pared:"arriba",barras:0,entelar:false,sillasFilas:0,sillasCols:0,pasillos:0});
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
@@ -376,7 +378,7 @@ function App(){
       else{sx=W-m-sFW/2;sy=L/2;}
       out.push(mk("escenario",{x:sx,y:sy,cols:gen.escCols,rows:gen.escRows,rot:vert?90:0}));
     }
-    const chairRot={arriba:0,abajo:180,izquierda:90,derecha:270};
+    const chairRot={arriba:180,abajo:0,izquierda:90,derecha:270};
     function entelarTodo(arr){
       const ins=0.25,pad=0.12;
       ["top","bottom","left","right"].forEach(wall=>{
@@ -454,7 +456,7 @@ function App(){
     if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(baseX*f,baseY*f);pts=p;if(p.length<=gen.mesas)break;}}
     let chosen=pts;
     if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
-    const rotMesa=gen.tipoMesa.startsWith("escuela")?chairRot[gen.pared]:0;
+    const rotMesa=gen.tipoMesa.startsWith("escuela")?(chairRot[gen.pared]+180)%360:0;
     chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y,rot:rotMesa})));
     const placed=chosen.length;
 
@@ -572,8 +574,8 @@ function App(){
   const cubiertos=useMemo(()=>{let t=0;els.forEach(e=>{if(esMesa(e.tipo))t+=(e.sillas||0);else if(e.tipo==="auditorio")t+=(e.cols||0)*(e.rows||0);else if(e.tipo==="silla")t+=1;});return t;},[els]);
 
   const TR=(360-rot)%360;
-  function sillasR(d,n){const r=(d/2+0.32)*scale,s=0.5*scale,a=[];for(let i=0;i<n;i++){const ang=(i/n)*Math.PI*2,cx=Math.cos(ang)*r,cy=Math.sin(ang)*r;a.push(<rect key={i} x={cx-s/2} y={cy-s/2} width={s} height={s} rx={2} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={.8} transform={`rotate(${ang*180/Math.PI+90} ${cx} ${cy})`}/>);}return a;}
-  function sillasRect(e,n){const s=0.5*scale,gap=0.10*scale,a=[];const y=(e.h/2)*scale+gap+s/2;const span=e.w*scale;for(let i=0;i<n;i++){const cx=-span/2+span*(i+0.5)/n;a.push(<rect key={i} x={cx-s/2} y={y-s/2} width={s} height={s} rx={2} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={.8}/>);}return a;}
+  function sillasR(d,n){const r=(d/2+0.32)*scale,s=0.5*scale,a=[];for(let i=0;i<n;i++){const ang=(i/n)*Math.PI*2,cx=Math.cos(ang)*r,cy=Math.sin(ang)*r,deg=ang*180/Math.PI+90;a.push(<g key={i} transform={`translate(${cx},${cy}) rotate(${deg})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={-s/2} x2={s/2} y2={-s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}return a;}
+  function sillasRect(e,n){const s=0.5*scale,gap=0.10*scale,a=[];const cy=(e.h/2)*scale+gap+s/2;const span=e.w*scale;for(let i=0;i<n;i++){const cx=-span/2+span*(i+0.5)/n;a.push(<g key={i} transform={`translate(${cx},${cy})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={s/2} x2={s/2} y2={s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}return a;}
   function numText(e,c){if(e.num==null||e.num==="")return null;const fs=c.forma==="circ"?e.d*scale*0.5:Math.min(e.h*scale*0.85,e.w*scale*0.5);return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="800" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.num}</text>;}
   function modulos(e){const a=[];for(let c=1;c<e.cols;c++){const x=-e.w/2*scale+c*e.modW*scale;a.push(<line key={"v"+c} x1={x} y1={-e.h/2*scale} x2={x} y2={e.h/2*scale} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}for(let r=1;r<e.rows;r++){const y=-e.h/2*scale+r*e.modH*scale;a.push(<line key={"h"+r} x1={-e.w/2*scale} y1={y} x2={e.w/2*scale} y2={y} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}return a;}
   function enteladoPath(e){const len=e.w*scale,amp=0.2*scale,waves=Math.max(2,Math.round(e.w/0.7)),steps=waves*10;let d="M "+(-len/2)+" 0";for(let i=1;i<=steps;i++){const x=-len/2+(i/steps)*len,y=Math.sin((i/steps)*waves*2*Math.PI)*amp;d+=" L "+x.toFixed(1)+" "+y.toFixed(1);}return d;}
@@ -588,14 +590,15 @@ function App(){
   }
   function renderEl(e){
     const isS=selIds.includes(e.id), c=CAT[e.tipo]; let inner;
-    if(c&&c.forma==="circ"){inner=<g>{showMargen&&c.zona&&<circle r={c.zona/2*scale} fill="#94a3b8" opacity={0.10} stroke="#94a3b8" strokeWidth={0.8} strokeDasharray="3 4"/>}{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,c)}</g>;}
+    if(c&&c.forma==="circ"){inner=<g>{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,c)}</g>;}
     else if(e.tipo==="escenario"||e.tipo==="pista"){const st="#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="#e5e7eb" stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{wordLabel(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
     else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
-    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?wordLabel("DJ",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
+    else if(e.tipo==="escalera"){const w=e.w*scale,h=e.h*scale;inner=<g><rect x={-w/2} y={-h/2} width={w} height={h} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2.5:1.4}/><line x1={-w/2} y1={-h/6} x2={w/2} y2={-h/6} stroke="#6b7280" strokeWidth={1}/><line x1={-w/2} y1={h/6} x2={w/2} y2={h/6} stroke="#6b7280" strokeWidth={1}/></g>;}
+    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?wordLabel("DJ",e,c.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,c.stroke):e.tipo==="pantalla"?wordLabel("PANTALLA",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
     const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
     return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
@@ -652,7 +655,7 @@ function App(){
     }
     return <g style={{pointerEvents:"none"}}>{a}</g>;
   }
-  function escalaBar(){const y=px(L)+22,cx=px(2.5);return <g fontFamily="var(--mono)"><line x1={px(0)} y1={y} x2={px(5)} y2={y} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(0)} y1={y-4} x2={px(0)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(5)} y1={y-4} x2={px(5)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><text x={cx} y={y-7} textAnchor="middle" fontSize={10} fill="#1e3a5f" transform={`rotate(${TR} ${cx} ${y-7})`}>5 m</text></g>;}
+  function escalaBar(){const y=px(L)+22,cx=px(2.5);return <g fontFamily="var(--mono)"><line x1={px(0)} y1={y} x2={px(5)} y2={y} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(0)} y1={y-4} x2={px(0)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(5)} y1={y-4} x2={px(5)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><rect x={cx-30} y={y-8} width={60} height={16} fill="#fff"/><text x={cx} y={y} textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="700" fill="#1e3a5f">5 metros</text></g>;}
 
   const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":(CAT[t]?.nm||t);
 
@@ -679,8 +682,8 @@ function App(){
             <NumF label="Cant. mesas" v={gen.mesas} min={0} on={n=>setGen({...gen,mesas:n})}/>
             <NumF label="Mesas apoyo" v={gen.apoyo} min={0} on={n=>setGen({...gen,apoyo:n})}/>
             </>:<>
-            <NumF label="Filas (sillas)" v={gen.sillasFilas} min={1} on={n=>setGen({...gen,sillasFilas:n})}/>
-            <NumF label="Columnas (sillas)" v={gen.sillasCols} min={1} on={n=>setGen({...gen,sillasCols:n})}/>
+            <NumF label="Filas (sillas)" v={gen.sillasFilas} min={0} on={n=>setGen({...gen,sillasFilas:n})}/>
+            <NumF label="Columnas (sillas)" v={gen.sillasCols} min={0} on={n=>setGen({...gen,sillasCols:n})}/>
             <NumF label="Pasillos vert." v={gen.pasillos} min={0} on={n=>setGen({...gen,pasillos:n})}/>
             </>}
             <label className="f">Escenario en<select value={gen.pared} onChange={e=>setGen({...gen,pared:e.target.value})}><option value="arriba">Pared Izquierda</option><option value="abajo">Pared Derecha</option><option value="izquierda">Pared Ingreso</option><option value="derecha">Pared Back</option></select></label>
@@ -699,8 +702,8 @@ function App(){
         <div className="card">
           <div className="card-h">Agregar elementos</div>
           <div className="sec-h">Estructura</div>
-          <Pal onClick={()=>add("escenario")} nm="Escenario" sw="#ea580c"/>
-          <Pal onClick={()=>add("pista")} nm="Pista de baile" sw="#16a34a"/>
+          <Pal onClick={()=>add("escenario")} nm="Escenario (mod. 2,44 x 1,80)" sw="#ea580c"/>
+          <Pal onClick={()=>add("pista")} nm="Pista (mod. 1,20 x 1,20)" sw="#16a34a"/>
           <Pal onClick={()=>add("aereo")} nm="Aéreo de pista" sw="#7c3aed" dash/>
           <div className="sec-h" style={{marginTop:10}}>Decoración</div>
           <Pal onClick={()=>add("entelado")} nm="Entelado de pared" sw="#0d9488" wavy/>
@@ -717,18 +720,15 @@ function App(){
           <button className="tb" title="Zoom In" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={15}/></button>
           <button className="tb" title="Zoom Out" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={15}/></button>
           <button className="tb" title="Girar la vista 90°" onClick={()=>setRot(r=>(r+90)%360)}><Ic d={I.rotate} s={15}/> 90°</button>
-          {selIds.length>1&&<>
-            <span className="tb-sep"/>
-            <button className="tb" title="Alineación Horizontal" onClick={()=>groupAlign(hh?"y":"x")}><Ic d={I.alignY} s={15}/></button>
-            <button className="tb" title="Alineación Vertical" onClick={()=>groupAlign(hh?"x":"y")}><Ic d={I.alignX} s={15}/></button>
-            <button className="tb" title="Distribuir Horizontal" onClick={()=>groupDistribute(hh?"x":"y")} disabled={selIds.length<3}><Ic d={I.distX} s={15}/></button>
-            <button className="tb" title="Distribuir Vertical" onClick={()=>groupDistribute(hh?"y":"x")} disabled={selIds.length<3}><Ic d={I.distY} s={15}/></button>
-            <button className="tb" title="Agrupar los elementos seleccionados" onClick={agrupar}><Ic d={I.group} s={15}/> Agrupar</button>
-          </>}
-          {selGrouped()&&<button className="tb" title="Desagrupar" onClick={desagrupar}><Ic d={I.ungroup} s={15}/> Desagrupar</button>}
+          <span className="tb-sep"/>
+          <button className="tb" title="Alineación Horizontal" disabled={selIds.length<2} onClick={()=>groupAlign(hh?"y":"x")}><Ic d={I.alignY} s={15}/></button>
+          <button className="tb" title="Alineación Vertical" disabled={selIds.length<2} onClick={()=>groupAlign(hh?"x":"y")}><Ic d={I.alignX} s={15}/></button>
+          <button className="tb" title="Distribuir Horizontal" disabled={selIds.length<3} onClick={()=>groupDistribute(hh?"x":"y")}><Ic d={I.distX} s={15}/></button>
+          <button className="tb" title="Distribuir Vertical" disabled={selIds.length<3} onClick={()=>groupDistribute(hh?"y":"x")}><Ic d={I.distY} s={15}/></button>
+          <button className="tb" title="Agrupar los elementos seleccionados" disabled={selIds.length<2} onClick={agrupar}><Ic d={I.group} s={15}/> Agrupar</button>
+          <button className="tb" title="Desagrupar" disabled={!selGrouped()} onClick={desagrupar}><Ic d={I.ungroup} s={15}/> Desagrupar</button>
           <button className={"tb "+(grid?"on":"off")} title="Mostrar/ocultar grilla" onClick={()=>setGrid(v=>!v)}><Ic d={I.grid} s={15}/> Grilla</button>
           <button className={"tb "+(showDoors?"on":"off")} title="Mostrar/ocultar divisorias" onClick={()=>setShowDoors(v=>!v)}>Puertas</button>
-          <button className={"tb "+(showMargen?"on":"off")} title="Mostrar/ocultar el margen libre de las mesas" onClick={()=>setShowMargen(v=>!v)}>Margen</button>
           {S.alturas&&<button className={"tb "+(showAlturas?"on":"off")} title="Mostrar/ocultar alturas de techo, viga y puertas" onClick={()=>setShowAlturas(v=>!v)}>Techo</button>}
           <button className={"tb "+(showSillas?"on":"off")} onClick={()=>setShowSillas(v=>!v)}><Ic d={I.eye} s={15}/> Sillas</button>
           <label className="f" style={{flexDirection:"row",alignItems:"center",gap:5,marginLeft:4}}>Imán<select value={imn} onChange={e=>setImn(+e.target.value)} style={{width:"auto"}}><option value={0}>off</option><option value={0.1}>10 cm</option><option value={0.25}>25 cm</option><option value={0.5}>50 cm</option></select></label>
@@ -758,20 +758,21 @@ function App(){
         <div className="card">
           <div className="card-h">{selIds.length>1?`${selIds.length} elementos seleccionados`:"Elemento seleccionado"}</div>
           {selIds.length>1?
-            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              <button className="btn" onClick={()=>groupRotate(90)}><Ic d={I.rotate} s={14}/> 90°</button>
-              <button className="btn" onClick={groupDup}><Ic d={I.copy} s={14}/></button>
-              <button className="btn btn-danger" onClick={groupDel}><Ic d={I.trash} s={14}/> Borrar</button>
+            <div>
+              {(()=>{const ss=els.filter(e=>selIds.includes(e.id));const same=ss.length>1&&ss.every(e=>esMesa(e.tipo)&&e.tipo===ss[0].tipo);return same?<div className="grid2" style={{marginBottom:9}}><NumF label="Sillas por mesa" v={ss[0].sillas??0} min={0} on={n=>{pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,sillas:n}:e));}}/></div>:null;})()}
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                <button className="btn" onClick={()=>groupRotate(90)}><Ic d={I.rotate} s={14}/> 90°</button>
+                <button className="btn" onClick={groupDup}><Ic d={I.copy} s={14}/></button>
+                <button className="btn btn-danger" onClick={groupDel}><Ic d={I.trash} s={14}/> Borrar</button>
+              </div>
             </div>
           : !selEl? <div className="muted">Tocá un elemento para moverlo o editarlo.</div> :
           <div>
             <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>{labelTipo(selEl.tipo)}</div>
             <div className="grid2">
-              <NumF label="X (m)" v={r2(selEl.x)} step={0.25} on={n=>updH(selEl.id,{x:n})}/>
-              <NumF label="Y (m)" v={r2(selEl.y)} step={0.25} on={n=>updH(selEl.id,{y:n})}/>
-              {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><NumF label="Cols" v={selEl.cols} min={0} on={n=>updH(selEl.id,{cols:n,w:n*selEl.modW})}/><NumF label="Filas" v={selEl.rows} min={0} on={n=>updH(selEl.id,{rows:n,h:n*selEl.modH})}/></>}
+              {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><StdF label="Cols" size={selEl.w} mod={selEl.modW} on={n=>updH(selEl.id,{cols:n,w:n*selEl.modW})}/><StdF label="Filas" size={selEl.h} mod={selEl.modH} on={n=>updH(selEl.id,{rows:n,h:n*selEl.modH})}/><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.5} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.5} on={n=>updH(selEl.id,{h:n})}/></>}
               {esMesa(selEl.tipo)&&<NumF label="Sillas" v={selEl.sillas??0} min={0} on={n=>updH(selEl.id,{sillas:n})}/>}
-              {["dj","parlante","aereo"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
+              {["dj","parlante","aereo","barra","pantalla"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
               {selEl.tipo==="entelado"&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
               {selEl.tipo==="auditorio"&&<><NumF label="Filas" v={selEl.rows} min={1} on={n=>updAud(selEl.id,{rows:n})}/><NumF label="Columnas" v={selEl.cols} min={1} on={n=>updAud(selEl.id,{cols:n})}/><NumF label="Pasillos" v={selEl.aisles} min={0} on={n=>updAud(selEl.id,{aisles:n})}/><NumF label="Pasillo (m)" v={r2(selEl.aisleW)} step={0.1} min={0.3} on={n=>updAud(selEl.id,{aisleW:n})}/></>}
             </div>

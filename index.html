@@ -26,6 +26,7 @@
   .col-center{flex:1;min-width:300px;background:var(--bg);text-align:center;padding:12px}
   .resizer{flex:0 0 6px;cursor:col-resize;background:transparent;align-self:stretch}
   .resizer:hover{background:#cbd5e1}
+  body.previewing .col-left,body.previewing .col-right,body.previewing .resizer,body.previewing .roomcfg,body.previewing .col-center>.muted{display:none !important}
   @media(max-height:920px){.col{max-height:calc(100vh - 56px)}}
   .card{border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:14px;background:#fff}
   .card-h{font-size:13px;font-weight:700;color:var(--navy);margin:0 0 9px;display:flex;align-items:center;gap:6px}
@@ -201,6 +202,13 @@ function App(){
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
+  const [preview,setPreview]=useState(false);
+  useEffect(()=>{document.body.classList.toggle("previewing",preview);const t=setTimeout(()=>fitScale(),30);return()=>clearTimeout(t);},[preview]);
+  const [exportOpen,setExportOpen]=useState(false);
+  const [expFmt,setExpFmt]=useState("png");
+  const [expResumen,setExpResumen]=useState(false);
+  const [exportPreview,setExportPreview]=useState("");
+  useEffect(()=>{if(!exportOpen){setExportPreview("");return;}const t=setTimeout(()=>{const svg=buildExportSVG();setExportPreview(svg?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg):"");},70);return()=>clearTimeout(t);},[exportOpen,els,scale,rot,doc,expResumen,salonKey,comboIdx,showAlturas,showSillas,leftW,rightW]);
   const [leftW,setLeftW]=useState(248);
   const [rightW,setRightW]=useState(288);
   function startResize(side,e){e.preventDefault();const sx=e.clientX,sL=leftW,sR=rightW;const mv=ev=>{if(side==="left")setLeftW(Math.max(190,Math.min(460,sL+(ev.clientX-sx))));else setRightW(Math.max(210,Math.min(520,sR-(ev.clientX-sx))));};const up=()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);document.body.style.cursor="";};window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);document.body.style.cursor="col-resize";}
@@ -235,7 +243,7 @@ function App(){
     if(!isFinite(s)||s<=0)return;
     setScale(Math.max(7,Math.min(40,Math.floor(s))));
   }
-  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L]);
+  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview]);
   useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[rot,W,L]);
   function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash(S.nombre+" · "+c.label);}
   function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
@@ -673,6 +681,49 @@ function App(){
   function escalaBar(){const y=px(L)+22,cx=px(2.5);return <g fontFamily="var(--mono)"><line x1={px(0)} y1={y} x2={px(5)} y2={y} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(0)} y1={y-4} x2={px(0)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(5)} y1={y-4} x2={px(5)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><rect x={cx-30} y={y-8} width={60} height={16} fill="#fff"/><text x={cx} y={y} textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="700" fill="#1e3a5f">5 metros</text></g>;}
 
   const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":(CAT[t]?.nm||t);
+  function escXml(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function buildExportSVG(){
+    if(!svgRef.current) return "";
+    const plano=svgRef.current.cloneNode(true);
+    plano.querySelectorAll(".no-export").forEach(n=>n.remove());
+    const pad=26;
+    const headerH=doc?66:34;
+    const refs=[{c:"#16a34a",t:"Ingresos"}];
+    if(S.doors.porton)refs.push({c:"#0e7490",t:"Portón"});
+    refs.push({c:"#dc2626",t:"Ingreso Back"},{c:"#f59e0b",t:"Puertas divisorias"},{c:"#0d9488",t:"Entelado"});
+    if(showAlturas&&S.alturas){refs.push({c:"#fdba74",t:"Altura "+S.alturas.centro+" m"},{c:"#c4b5fd",t:"Altura "+S.alturas.lateral+" m"});if(S.alturas.viga)refs.push({c:"#111827",t:"Viga (100 kg/m lineal)"});}
+    const salonLine=S.nombre+" · "+combo.label;
+    let resL=[];
+    if(expResumen){Object.entries(counts).forEach(([k,n])=>resL.push(labelTipo(k)+": "+n));if(cubiertos>0)resL.push("Cubiertos totales: "+cubiertos);}
+    const pageW=Math.max(svgW,520)+pad*2;
+    const planoY=pad+headerH, salonY=planoY+svgH+22;
+    let rx=pad, ry=salonY+26, refParts=[];
+    refs.forEach(r=>{const w=11+8+r.t.length*6.0+18; if(rx+w>pageW-pad){rx=pad;ry+=22;} refParts.push(`<rect x="${rx}" y="${ry-9}" width="11" height="11" rx="2" fill="${r.c}"/><text x="${rx+16}" y="${ry}" font-size="11" fill="#334155" font-family="sans-serif">${escXml(r.t)}</text>`); rx+=w;});
+    let resBottom=ry+12, resSVG="";
+    if(expResumen&&resL.length){const ry0=resBottom+18; resSVG=`<text x="${pad}" y="${ry0}" font-size="12" font-weight="700" fill="#1e3a5f" font-family="sans-serif">Resumen</text>`+resL.map((l,i)=>`<text x="${pad}" y="${ry0+20+i*16}" font-size="11" fill="#334155" font-family="sans-serif">${escXml(l)}</text>`).join(""); resBottom=ry0+20+resL.length*16;}
+    const pageH=resBottom+pad;
+    const planoX=(pageW-svgW)/2;
+    plano.setAttribute("width",svgW);plano.setAttribute("height",svgH);plano.setAttribute("viewBox",`0 0 ${svgW} ${svgH}`);plano.removeAttribute("style");
+    const planoStr=`<g transform="translate(${planoX},${planoY})">`+new XMLSerializer().serializeToString(plano)+`</g>`;
+    const header=doc
+      ? `<text x="${pageW/2}" y="${pad+24}" text-anchor="middle" font-size="17" font-weight="700" fill="#1e3a5f" font-family="sans-serif">${escXml(doc.evento)}</text>`+(doc.plano?`<text x="${pageW/2}" y="${pad+46}" text-anchor="middle" font-size="12" fill="#64748b" font-family="sans-serif">${escXml(doc.plano)}</text>`:"")
+      : `<text x="${pageW/2}" y="${pad+22}" text-anchor="middle" font-size="14" font-weight="700" fill="#94a3b8" font-family="sans-serif">Plano sin guardar</text>`;
+    const salon=`<text x="${pageW/2}" y="${salonY}" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a5f" font-family="sans-serif">${escXml(salonLine)}</text>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${pageW}" height="${pageH}" viewBox="0 0 ${pageW} ${pageH}"><rect width="${pageW}" height="${pageH}" fill="#ffffff"/>${header}${planoStr}${salon}${refParts.join("")}${resSVG}</svg>`;
+  }
+  function exportPlano(){
+    const svgStr=buildExportSVG(); if(!svgStr) return;
+    const m=svgStr.match(/width="([\d.]+)" height="([\d.]+)"/);
+    const PW=m?+m[1]:svgW, PH=m?+m[2]:svgH;
+    const url="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svgStr);
+    const fname=(doc?(doc.plano||doc.evento||"plano"):"plano").replace(/[\\/:*?"<>|]/g,"-");
+    const img=new Image();
+    img.onload=()=>{
+      if(expFmt==="png"){const s=2,cv=document.createElement("canvas");cv.width=PW*s;cv.height=PH*s;const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,0,0,cv.width,cv.height);cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname+".png";a.click();});flash("Plano exportado en PNG.");}
+      else{const w=window.open("","_blank");if(!w){flash("Permití las ventanas emergentes para exportar PDF.");return;}w.document.write(`<html><head><title>${escXml(fname)}</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center}img{max-width:100%}</style></head><body><img src="${url}"/></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print();},450);}
+    };
+    img.src=url;
+  }
 
   return <div>
     <div className="header">
@@ -682,10 +733,11 @@ function App(){
         <label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>
         <label>Ancho (m)<input type="number" value={room.w} step={0.5} onChange={e=>setRoom(r=>({...r,w:Math.max(2,+e.target.value)}))}/></label>
         <label>Largo (m)<input type="number" value={room.l} step={0.5} onChange={e=>setRoom(r=>({...r,l:Math.max(2,+e.target.value)}))}/></label>
-        <div className="head-actions"><button className="btn btn-ghost" onClick={exportPNG}><Ic d={I.download} s={15}/> PNG</button><button className="btn btn-ghost" onClick={()=>window.print()}><Ic d={I.print} s={15}/> PDF</button></div>
+        <div className="head-actions"><button className="btn btn-ghost" onClick={()=>setPreview(true)}><Ic d={I.eye} s={15}/> Previsualizar</button><button className="btn btn-ghost" onClick={()=>setExportOpen(true)}><Ic d={I.download} s={15}/> Exportar Plano</button></div>
       </div>
     </div>
 
+    {preview&&<button className="btn btn-primary" style={{position:"fixed",top:12,right:14,zIndex:200}} onClick={()=>setPreview(false)}><Ic d={I.x} s={14}/> Salir de previsualización</button>}
     <div className="layout">
       <div className="col col-left" style={{width:leftW,flexShrink:0}}>
         <div className="card">
@@ -822,6 +874,38 @@ function App(){
         </div>
       </div>
     </div>
+    {exportOpen&&<div className="modal-bg" onClick={()=>setExportOpen(false)}>
+      <div className="modal" style={{width:940,maxWidth:"96vw"}} onClick={e=>e.stopPropagation()}>
+        <div className="modal-h"><span>Exportar plano</span><button className="btn btn-ghost" style={{padding:4}} onClick={()=>setExportOpen(false)}><Ic d={I.x} s={16}/></button></div>
+        <div style={{display:"flex",gap:16,alignItems:"flex-start",flexWrap:"wrap"}}>
+          <div style={{flex:"1 1 360px",background:"#eef2f7",borderRadius:8,padding:12,display:"flex",justifyContent:"center",alignItems:"center",minHeight:320,maxHeight:"66vh",overflow:"auto"}}>
+            {exportPreview?<img src={exportPreview} alt="Previsualización" style={{maxWidth:"100%",maxHeight:"60vh",background:"#fff",boxShadow:"0 2px 14px rgba(0,0,0,.16)"}}/>:<div className="muted">Generando previsualización…</div>}
+          </div>
+          <div style={{width:230,flexShrink:0,display:"flex",flexDirection:"column",gap:15}}>
+            <div>
+              <div className="muted" style={{marginBottom:6,fontWeight:600}}>Tipo de archivo</div>
+              <div style={{display:"flex",gap:6}}>
+                <button className={"btn "+(expFmt==="png"?"btn-primary":"btn-ghost")} style={{flex:1}} onClick={()=>setExpFmt("png")}>PNG</button>
+                <button className={"btn "+(expFmt==="pdf"?"btn-primary":"btn-ghost")} style={{flex:1}} onClick={()=>setExpFmt("pdf")}>PDF</button>
+              </div>
+            </div>
+            <div>
+              <div className="muted" style={{marginBottom:6,fontWeight:600}}>Zoom</div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="btn btn-ghost" style={{flex:1}} title="Alejar" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={16}/></button>
+                <button className="btn btn-ghost" style={{flex:1}} title="Acercar" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={16}/></button>
+              </div>
+            </div>
+            <div>
+              <div className="muted" style={{marginBottom:6,fontWeight:600}}>Orientación</div>
+              <button className="btn btn-ghost btn-block" onClick={()=>setRot(r=>(r+90)%360)}><Ic d={I.rotate} s={15}/> Girar 90°</button>
+            </div>
+            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:600,color:"#334155"}}><input type="checkbox" checked={expResumen} onChange={e=>setExpResumen(e.target.checked)}/> Incluir Resumen</label>
+            <button className="btn btn-primary btn-block" style={{marginTop:4}} onClick={exportPlano}><Ic d={I.download} s={15}/> Exportar {expFmt.toUpperCase()}</button>
+          </div>
+        </div>
+      </div>
+    </div>}
     {drive&&<div className="modal-bg" onClick={()=>!driveBusy&&setDrive(null)}>
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-h">

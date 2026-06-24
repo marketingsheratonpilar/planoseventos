@@ -470,9 +470,9 @@ function App(){
     const rotMesa=gen.tipoMesa.startsWith("escuela")?(chairRot[gen.pared]+180)%360:0;
     const rotada=rotMesa%180!==0;
     const fw=rotada?th:tw, fh=rotada?tw:th;
-    let sx,sy;
-    if(c.forma==="circ"){sx=sy=c.zona||(c.d+1.0);}
-    else{const lado=0.40,frente=0.80;sx=rotada?th+frente:tw+lado;sy=rotada?tw+lado:th+frente;}
+    let sepX,sepY;
+    if(c.forma==="circ"){sepX=sepY=c.zona||(c.d+1.0);}
+    else{const lado=0.40,frente=0.80;sepX=rotada?th+frente:tw+lado;sepY=rotada?tw+lado:th+frente;}
     function lattice(sxs,sys){
       const ncol=Math.max(1,Math.floor((W-2*m-fw)/sxs)+1), nrow=Math.max(1,Math.floor((L-2*m-fh)/sys)+1);
       const gx=W/2-(ncol-1)*sxs/2, gy=L/2-(nrow-1)*sys/2;
@@ -480,9 +480,9 @@ function App(){
       for(let r=0;r<nrow;r++)for(let cc=0;cc<ncol;cc++){const x=gx+cc*sxs,y=gy+r*sys;if(x<m+fw/2||x>W-m-fw/2||y<m+fh/2||y>L-m-fh/2)continue;if(choca(x,y,fw,fh))continue;pts.push({x,y});}
       return pts;
     }
-    let pts=lattice(sx,sy), chosen;
+    let pts=lattice(sepX,sepY), chosen;
     if(c.forma==="circ"){
-      if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(sx*f,sy*f);if(p.length<gen.mesas)break;pts=p;}}
+      if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(sepX*f,sepY*f);if(p.length<gen.mesas)break;pts=p;}}
       if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
       else chosen=pts;
     } else { chosen=pts.slice(0,gen.mesas); }

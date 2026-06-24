@@ -34,6 +34,13 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--slate)}
   .f input,.f select{font-family:var(--mono);font-size:13px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:var(--ink);width:100%}
+  .stepper{display:flex;align-items:stretch;height:27px;border:1px solid #cbd5e1;border-radius:5px;overflow:hidden;background:#fff}
+  .stepper>.val{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:var(--ink)}
+  .stepper>.stpcol{display:flex;flex-direction:column;width:19px;border-left:1px solid #cbd5e1;opacity:0;transition:opacity .1s}
+  .stepper:hover>.stpcol{opacity:1}
+  .stepper>.stpcol button{flex:1;border:none;background:#f1f5f9;cursor:pointer;font-size:8px;line-height:1;padding:0;color:#475569}
+  .stepper>.stpcol button:hover{background:#e2e8f0}
+  .stepper>.stpcol button:first-child{border-bottom:1px solid #cbd5e1}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.12s}
   .btn:hover{background:#f8fafc}.btn:disabled{opacity:.4;cursor:default}
   .btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}.btn-primary:hover{background:var(--navy-d)}
@@ -117,7 +124,8 @@ const CAT = {
   escuela_180x045: { nm:"Escuela 1,80×0,45",          forma:"rect", w:1.80, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:3 },
   escuela_244x045: { nm:"Escuela 2,44×0,45",          forma:"rect", w:2.44, h:0.45, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
   escuela_244x075: { nm:"Escuela 2,44×0,75",          forma:"rect", w:2.44, h:0.75, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
-  espejada_244x090:{ nm:"Espejada / cabecera 2,44×0,90", forma:"rect", w:2.44, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
+  espejada_244x090:{ nm:"Espejada 2,44x0,90",       forma:"rect", w:2.44, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
+  mesa_editable:   { nm:"Mesa Editable",             forma:"rect", w:1.50, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
   barra:           { nm:"Barra (mod. 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Servicio" },
   dj:              { nm:"DJ (editable)",              forma:"rect", w:1.50, h:1.00, fill:"#e5e7eb", stroke:"#6b7280", cat:"Técnica" },
   parlante:        { nm:"Parlante (editable)",        forma:"rect", w:0.60, h:0.60, fill:"#9ca3af", stroke:"#4b5563", cat:"Técnica" },
@@ -130,6 +138,8 @@ const SEAT=0.5, SGX=0.10, SGY=0.50;
 function audColsX(cols,aisles,aw){const groups=(aisles||0)+1;const cpg=Math.ceil(cols/groups);const xs=[];for(let i=0;i<cols;i++){const g=Math.floor(i/cpg);xs.push(i*(SEAT+SGX)+g*aw);}return xs;}
 function audDims(cols,rows,aisles,aw){const xs=audColsX(cols,aisles,aw);const w=xs.length?xs[xs.length-1]+SEAT:SEAT;const h=rows*SEAT+(rows-1)*SGY;return {w,h};}
 const MESA_OPTS=["redonda_180","redonda_150","cuadrada_090","escuela_244x075","escuela_244x045","escuela_180x045","espejada_244x090"];
+const MAXSIL={cuadrada_090:4,escuela_180x045:3,escuela_244x045:4,escuela_244x075:10,espejada_244x090:10};
+const maxSillas=e=>e.tipo==="mesa_editable"?Math.max(1,Math.floor((e.w+e.h)*2/0.5)):MAXSIL[e.tipo];
 const SALONES={
   girasoles:{nombre:"Los Girasoles",w:21.64,total:43.44,divThick:0.1,
     sections:[[0,14.18],[14.28,28.87],[28.97,43.44]],
@@ -177,8 +187,8 @@ const store={read(){try{return JSON.parse(localStorage.getItem("girasoles_layout
 
 const I={download:"M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2",print:"M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14h12v7H6z",wand:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 2.5L9 19l-2.5-2.5L17 3z",rotate:"M3 12a9 9 0 109-9 9 9 0 00-6.36 2.64L3 8m0-5v5h5",copy:"M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M4 10v8a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2z",trash:"M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m1 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",x:"M6 6l12 12M18 6L6 18",zin:"M11 8v6M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",zout:"M8 11h6M21 21l-4.3-4.3M3 11a8 8 0 1016 0 8 8 0 00-16 0",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",eye:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z",flip:"M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",undo:"M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",redo:"M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3",alignX:"M12 2v20M8 7h8v4H8zM6 15h12v4H6z",alignY:"M2 12h20M7 8v8h4V8zM15 6v12h4V6z",distX:"M4 4v16M20 4v16M10 8h4v8h-4z",distY:"M4 4h16M4 20h16M8 10v4h8v-4z",group:"M4 4h6v6H4zM14 14h6v6h-6zM7 10v4M10 7h4",ungroup:"M4 4h5v5H4zM15 15h5v5h-5M9 6h3M6 9v3"};
 const Ic=({d,s=16})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
-function NumF({label,v,on,step=1,min}){return(<label className="f">{label}<input type="number" value={v} step={step} onChange={e=>{let n=+e.target.value;if(min!=null)n=Math.max(min,n);on(n);}}/></label>);}
-function StdF({label,size,mod,on}){const ex=size/mod;const std=Math.abs(ex-Math.round(ex))<0.01;return(<label className="f">{label}<input type="text" inputMode="numeric" value={std?String(Math.round(ex)):"-"} onChange={e=>{const n=parseInt(e.target.value,10);if(!isNaN(n)&&n>=0)on(n);}}/></label>);}
+function NumF({label,v,on,step=1,min,max}){return(<label className="f">{label}<input type="number" value={v} step={step} min={min} max={max} onChange={e=>{let n=+e.target.value;if(min!=null)n=Math.max(min,n);if(max!=null)n=Math.min(max,n);on(n);}}/></label>);}
+function StdF({label,size,mod,on}){const ex=size/mod;const std=Math.abs(ex-Math.round(ex))<0.01;const disp=std?Math.round(ex):null;return(<label className="f">{label}<span className="stepper"><span className="val">{disp==null?"–":disp}</span><span className="stpcol"><button type="button" onClick={()=>on((std?disp:Math.floor(ex))+1)}>▲</button><button type="button" onClick={()=>on(Math.max(0,(std?disp:Math.ceil(ex))-1))}>▼</button></span></span></label>);}
 function Pal({onClick,nm,sw,dash,wavy,chair}){return(<button className="pal" onClick={onClick}><span className="sw" style={(wavy||chair)?{}:(dash?{border:`2px dashed ${sw}`}:{background:sw+"33",border:`1.5px solid ${sw}`})}>{wavy&&<svg width="15" height="15" viewBox="0 0 15 15"><path d="M0 8 Q3.75 3 7.5 8 T15 8" fill="none" stroke={sw} strokeWidth="1.6"/></svg>}{chair&&<svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="1.5" fill={sw+"33"} stroke={sw} strokeWidth="1.2"/><line x1="2" y1="12" x2="12" y2="12" stroke={sw} strokeWidth="2.2"/></svg>}</span><span className="nm">{nm}</span><span className="pl">+</span></button>);}
 
 function App(){
@@ -454,22 +464,28 @@ function App(){
     zonasBar.forEach(z=>zonas.push({x:z.x,y:z.y,w:z.w+0.6,h:z.h+1.2}));
     const choca=(x,y,w,h)=>zonas.some(z=>Math.abs(x-z.x)<(w+z.w)/2&&Math.abs(y-z.y)<(h+z.h)/2);
 
-    // mesas: grilla uniforme (líneas rectas, igual distancia) y adaptativa para repartir N en todo el salón
+    // mesas: redondas se reparten en el salón; escuela/rectangulares se empacan juntas con separación chica
     const c=CAT[gen.tipoMesa];
     const tw=c.forma==="circ"?c.d:c.w, th=c.forma==="circ"?c.d:c.h;
-    const baseX=c.zona||(tw+(c.forma==="circ"?1.1:1.0)), baseY=c.zona||(th+(c.forma==="circ"?1.1:1.0));
+    const rotMesa=gen.tipoMesa.startsWith("escuela")?(chairRot[gen.pared]+180)%360:0;
+    const rotada=rotMesa%180!==0;
+    const fw=rotada?th:tw, fh=rotada?tw:th;
+    let sx,sy;
+    if(c.forma==="circ"){sx=sy=c.zona||(c.d+1.0);}
+    else{const lado=0.40,frente=0.80;sx=rotada?th+frente:tw+lado;sy=rotada?tw+lado:th+frente;}
     function lattice(sxs,sys){
-      const ncol=Math.max(1,Math.floor((W-2*m)/sxs)+1), nrow=Math.max(1,Math.floor((L-2*m)/sys)+1);
+      const ncol=Math.max(1,Math.floor((W-2*m-fw)/sxs)+1), nrow=Math.max(1,Math.floor((L-2*m-fh)/sys)+1);
       const gx=W/2-(ncol-1)*sxs/2, gy=L/2-(nrow-1)*sys/2;
       const pts=[];
-      for(let r=0;r<nrow;r++)for(let cc=0;cc<ncol;cc++){const x=gx+cc*sxs,y=gy+r*sys;if(x<m+tw/2||x>W-m-tw/2||y<m+th/2||y>L-m-th/2)continue;if(choca(x,y,tw,th))continue;pts.push({x,y});}
+      for(let r=0;r<nrow;r++)for(let cc=0;cc<ncol;cc++){const x=gx+cc*sxs,y=gy+r*sys;if(x<m+fw/2||x>W-m-fw/2||y<m+fh/2||y>L-m-fh/2)continue;if(choca(x,y,fw,fh))continue;pts.push({x,y});}
       return pts;
     }
-    let pts=lattice(baseX,baseY);
-    if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(baseX*f,baseY*f);pts=p;if(p.length<=gen.mesas)break;}}
-    let chosen=pts;
-    if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
-    const rotMesa=gen.tipoMesa.startsWith("escuela")?(chairRot[gen.pared]+180)%360:0;
+    let pts=lattice(sx,sy), chosen;
+    if(c.forma==="circ"){
+      if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(sx*f,sy*f);if(p.length<gen.mesas)break;pts=p;}}
+      if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
+      else chosen=pts;
+    } else { chosen=pts.slice(0,gen.mesas); }
     chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y,rot:rotMesa})));
     const placed=chosen.length;
 
@@ -588,7 +604,18 @@ function App(){
 
   const TR=(360-rot)%360;
   function sillasR(d,n){const r=(d/2+0.32)*scale,s=0.5*scale,a=[];for(let i=0;i<n;i++){const ang=(i/n)*Math.PI*2,cx=Math.cos(ang)*r,cy=Math.sin(ang)*r,deg=ang*180/Math.PI+90;a.push(<g key={i} transform={`translate(${cx},${cy}) rotate(${deg})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={-s/2} x2={s/2} y2={-s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}return a;}
-  function sillasRect(e,n){const s=0.5*scale,gap=0.10*scale,a=[];const cy=(e.h/2)*scale+gap+s/2;const span=e.w*scale;for(let i=0;i<n;i++){const cx=-span/2+span*(i+0.5)/n;a.push(<g key={i} transform={`translate(${cx},${cy})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={s/2} x2={s/2} y2={s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}return a;}
+  function rectSeats(e,n){
+    const s=0.5*scale,gap=0.10*scale,hw=e.w/2*scale,hh=e.h/2*scale,offY=hh+gap+s/2,offX=hw+gap+s/2,aw=e.w*scale,ah=e.h*scale;
+    const bottom=k=>Array.from({length:k},(_,i)=>({cx:-aw/2+aw*(i+0.5)/k,cy:offY,deg:0}));
+    const top=k=>Array.from({length:k},(_,i)=>({cx:-aw/2+aw*(i+0.5)/k,cy:-offY,deg:180}));
+    const leftEnd={cx:-offX,cy:0,deg:90},rightEnd={cx:offX,cy:0,deg:270};
+    const t=e.tipo;
+    if(t==="mesa_editable"){const w=e.w,h=e.h,P=2*(w+h),oY=(h/2+0.35)*scale,oX=(w/2+0.35)*scale,out=[];for(let i=0;i<n;i++){let d=((i+0.5)/n)*P,cx,cy,deg;if(d<=w){cx=(-w/2+d)*scale;cy=-oY;deg=180;}else if(d<=w+h){cx=oX;cy=(-h/2+(d-w))*scale;deg=270;}else if(d<=2*w+h){cx=(w/2-(d-w-h))*scale;cy=oY;deg=0;}else{cx=-oX;cy=(h/2-(d-2*w-h))*scale;deg=90;}out.push({cx,cy,deg});}return out;}
+    if(t==="cuadrada_090"){const order=[{cx:0,cy:-offY,deg:180},{cx:offX,cy:0,deg:270},{cx:0,cy:offY,deg:0},{cx:-offX,cy:0,deg:90}];return order.slice(0,Math.min(4,n));}
+    if(t==="escuela_244x075"||t==="espejada_244x090"){const out=[];out.push(...bottom(Math.min(4,n)));if(n>4)out.push(...top(Math.min(4,n-4)));if(n>8)out.push(leftEnd);if(n>9)out.push(rightEnd);return out;}
+    return bottom(n);
+  }
+  function sillasRect(e,n){const s=0.5*scale;return rectSeats(e,Math.max(0,n||0)).map((p,i)=><g key={i} transform={`translate(${p.cx},${p.cy}) rotate(${p.deg})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={s/2} x2={s/2} y2={s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}
   function numText(e,c){if(e.num==null||e.num==="")return null;const fs=c.forma==="circ"?e.d*scale*0.5:Math.min(e.h*scale*0.85,e.w*scale*0.5);return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="800" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.num}</text>;}
   function modulos(e){const a=[];for(let c=1;c<e.cols;c++){const x=-e.w/2*scale+c*e.modW*scale;a.push(<line key={"v"+c} x1={x} y1={-e.h/2*scale} x2={x} y2={e.h/2*scale} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}for(let r=1;r<e.rows;r++){const y=-e.h/2*scale+r*e.modH*scale;a.push(<line key={"h"+r} x1={-e.w/2*scale} y1={y} x2={e.w/2*scale} y2={y} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}return a;}
   function enteladoPath(e){const len=e.w*scale,amp=0.2*scale,waves=Math.max(2,Math.round(e.w/0.7)),steps=waves*10;let d="M "+(-len/2)+" 0";for(let i=1;i<=steps;i++){const x=-len/2+(i/steps)*len,y=Math.sin((i/steps)*waves*2*Math.PI)*amp;d+=" L "+x.toFixed(1)+" "+y.toFixed(1);}return d;}
@@ -828,7 +855,7 @@ function App(){
           <div className="card-h">{selIds.length>1?`${selIds.length} elementos seleccionados`:"Elemento seleccionado"}</div>
           {selIds.length>1?
             <div>
-              {(()=>{const ss=els.filter(e=>selIds.includes(e.id));const same=ss.length>1&&ss.every(e=>esMesa(e.tipo)&&e.tipo===ss[0].tipo);return same?<div className="grid2" style={{marginBottom:9}}><NumF label="Sillas por mesa" v={ss[0].sillas??0} min={0} on={n=>{pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,sillas:n}:e));}}/></div>:null;})()}
+              {(()=>{const ss=els.filter(e=>selIds.includes(e.id));const same=ss.length>1&&ss.every(e=>esMesa(e.tipo)&&e.tipo===ss[0].tipo);const mx=same?maxSillas(ss[0]):0;return same?<div className="grid2" style={{marginBottom:9}}><NumF label={mx?("Sillas por mesa (máx "+mx+")"):"Sillas por mesa"} v={ss[0].sillas??0} min={0} max={mx} on={n=>{pushHist();setEls(p=>p.map(e=>selIds.includes(e.id)?{...e,sillas:n}:e));}}/></div>:null;})()}
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                 <button className="btn" onClick={()=>groupRotate(90)}><Ic d={I.rotate} s={14}/> 90°</button>
                 <button className="btn" onClick={groupDup}><Ic d={I.copy} s={14}/></button>
@@ -840,8 +867,8 @@ function App(){
             <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>{labelTipo(selEl.tipo)}</div>
             <div className="grid2">
               {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><StdF label="Cols" size={selEl.w} mod={selEl.modW} on={n=>updH(selEl.id,{cols:n,w:n*selEl.modW})}/><StdF label="Filas" size={selEl.h} mod={selEl.modH} on={n=>updH(selEl.id,{rows:n,h:n*selEl.modH})}/><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.5} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.5} on={n=>updH(selEl.id,{h:n})}/></>}
-              {esMesa(selEl.tipo)&&<NumF label="Sillas" v={selEl.sillas??0} min={0} on={n=>updH(selEl.id,{sillas:n})}/>}
-              {["dj","parlante","aereo","barra","pantalla"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
+              {esMesa(selEl.tipo)&&(()=>{const mx=maxSillas(selEl);return <NumF label={mx?("Sillas (máx "+mx+")"):"Sillas"} v={selEl.sillas??0} min={0} max={mx} on={n=>updH(selEl.id,{sillas:n})}/>;})()}
+              {["dj","parlante","aereo","barra","pantalla","mesa_editable"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
               {selEl.tipo==="entelado"&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
               {selEl.tipo==="auditorio"&&<><NumF label="Filas" v={selEl.rows} min={1} on={n=>updAud(selEl.id,{rows:n})}/><NumF label="Columnas" v={selEl.cols} min={1} on={n=>updAud(selEl.id,{cols:n})}/><NumF label="Pasillos" v={selEl.aisles} min={0} on={n=>updAud(selEl.id,{aisles:n})}/><NumF label="Pasillo (m)" v={r2(selEl.aisleW)} step={0.1} min={0.3} on={n=>updAud(selEl.id,{aisleW:n})}/></>}
             </div>

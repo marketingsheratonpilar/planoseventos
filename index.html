@@ -876,7 +876,7 @@ function App(){
     </div>
     {exportOpen&&<div className="modal-bg" onClick={()=>setExportOpen(false)}>
       <div className="modal" style={{width:940,maxWidth:"96vw"}} onClick={e=>e.stopPropagation()}>
-        <div className="modal-h"><span>Exportar plano</span><button className="btn btn-ghost" style={{padding:4}} onClick={()=>setExportOpen(false)}><Ic d={I.x} s={16}/></button></div>
+        <div className="modal-h"><span>Exportar plano</span><button onClick={()=>setExportOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#64748b",padding:2,lineHeight:0}}><Ic d={I.x} s={18}/></button></div>
         <div style={{display:"flex",gap:16,alignItems:"flex-start",flexWrap:"wrap"}}>
           <div style={{flex:"1 1 360px",background:"#eef2f7",borderRadius:8,padding:12,display:"flex",justifyContent:"center",alignItems:"center",minHeight:320,maxHeight:"66vh",overflow:"auto"}}>
             {exportPreview?<img src={exportPreview} alt="Previsualización" style={{maxWidth:"100%",maxHeight:"60vh",background:"#fff",boxShadow:"0 2px 14px rgba(0,0,0,.16)"}}/>:<div className="muted">Generando previsualización…</div>}
@@ -885,21 +885,25 @@ function App(){
             <div>
               <div className="muted" style={{marginBottom:6,fontWeight:600}}>Tipo de archivo</div>
               <div style={{display:"flex",gap:6}}>
-                <button className={"btn "+(expFmt==="png"?"btn-primary":"btn-ghost")} style={{flex:1}} onClick={()=>setExpFmt("png")}>PNG</button>
-                <button className={"btn "+(expFmt==="pdf"?"btn-primary":"btn-ghost")} style={{flex:1}} onClick={()=>setExpFmt("pdf")}>PDF</button>
+                <button className={"btn "+(expFmt==="png"?"btn-primary":"")} style={{flex:1}} onClick={()=>setExpFmt("png")}>PNG</button>
+                <button className={"btn "+(expFmt==="pdf"?"btn-primary":"")} style={{flex:1}} onClick={()=>setExpFmt("pdf")}>PDF</button>
               </div>
             </div>
             <div>
               <div className="muted" style={{marginBottom:6,fontWeight:600}}>Zoom</div>
               <div style={{display:"flex",gap:6}}>
-                <button className="btn btn-ghost" style={{flex:1}} title="Alejar" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={16}/></button>
-                <button className="btn btn-ghost" style={{flex:1}} title="Acercar" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={16}/></button>
+                <button className="btn" style={{flex:1}} title="Alejar" onClick={()=>setScale(s=>Math.max(7,s-3))}><Ic d={I.zout} s={16}/></button>
+                <button className="btn" style={{flex:1}} title="Acercar" onClick={()=>setScale(s=>Math.min(40,s+3))}><Ic d={I.zin} s={16}/></button>
               </div>
             </div>
             <div>
               <div className="muted" style={{marginBottom:6,fontWeight:600}}>Orientación</div>
-              <button className="btn btn-ghost btn-block" onClick={()=>setRot(r=>(r+90)%360)}><Ic d={I.rotate} s={15}/> Girar 90°</button>
+              <button className="btn btn-block" onClick={()=>setRot(r=>(r+90)%360)}><Ic d={I.rotate} s={15}/> Girar 90°</button>
             </div>
+            {S.alturas&&<div>
+              <div className="muted" style={{marginBottom:6,fontWeight:600}}>Capa Techo</div>
+              <button className={"btn btn-block "+(showAlturas?"btn-primary":"")} onClick={()=>setShowAlturas(v=>!v)}><Ic d={I.grid} s={15}/> {showAlturas?"Ocultar Techo":"Mostrar Techo"}</button>
+            </div>}
             <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:600,color:"#334155"}}><input type="checkbox" checked={expResumen} onChange={e=>setExpResumen(e.target.checked)}/> Incluir Resumen</label>
             <button className="btn btn-primary btn-block" style={{marginTop:4}} onClick={exportPlano}><Ic d={I.download} s={15}/> Exportar {expFmt.toUpperCase()}</button>
           </div>

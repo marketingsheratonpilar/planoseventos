@@ -227,7 +227,7 @@ function App(){
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
-  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null), fileRef=useRef(null), centerRef=useRef(null);
+  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null), fileRef=useRef(null), centerRef=useRef(null), clip=useRef([]);
   const elsRef=useRef(els); elsRef.current=els;
   const histRef=useRef({past:[],future:[]});
   const [,force]=useReducer(x=>x+1,0);
@@ -255,7 +255,7 @@ function App(){
   }
   useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview]);
   useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[rot,W,L]);
-  function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash(S.nombre+" · "+c.label);}
+  function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];const delta=off-ys;pushHist();setEls(p=>p.map(e=>({...e,y:e.y+delta})));setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setSelIds([]);flash(S.nombre+" · "+c.label);}
   function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
 
   // ---- historial ----
@@ -331,7 +331,13 @@ function App(){
     if(grpIds){ids=grpIds;setSelIds(grpIds);}
     else if(selIds.includes(id)&&selIds.length>1)ids=selIds; else {ids=[id];setSelIds([id]);}
     pushHist();
-    const starts={}; elsRef.current.forEach(el=>{if(ids.includes(el.id))starts[el.id]={x:el.x,y:el.y};});
+    let startEls;
+    if(e.altKey){
+      const grpMap={};
+      const copies=elsRef.current.filter(el=>ids.includes(el.id)).map(el=>{const n={...el,id:uid()};if(el.grp){if(!grpMap[el.grp])grpMap[el.grp]=uid();n.grp=grpMap[el.grp];}return n;});
+      setEls(p=>[...p,...copies]);ids=copies.map(c=>c.id);setSelIds(ids);startEls=copies;
+    } else { startEls=elsRef.current.filter(el=>ids.includes(el.id)); }
+    const starts={}; startEls.forEach(el=>{starts[el.id]={x:el.x,y:el.y};});
     drag.current={ids,sx:e.clientX,sy:e.clientY,starts};
     e.currentTarget.setPointerCapture&&e.currentTarget.setPointerCapture(e.pointerId);
   }
@@ -369,6 +375,8 @@ function App(){
     function k(ev){
       const typing=["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName);
       if((ev.metaKey||ev.ctrlKey)&&(ev.key==="z"||ev.key==="Z")){ev.preventDefault();ev.shiftKey?redo():undo();return;}
+      if((ev.metaKey||ev.ctrlKey)&&(ev.key==="c"||ev.key==="C")&&selIds.length&&!typing){ev.preventDefault();clip.current=elsRef.current.filter(e=>selIds.includes(e.id)).map(e=>({...e}));return;}
+      if((ev.metaKey||ev.ctrlKey)&&(ev.key==="v"||ev.key==="V")&&clip.current.length&&!typing){ev.preventDefault();const grpMap={};const copies=clip.current.map(e=>{const n={...e,id:uid(),x:Math.min(W-.5,e.x+1),y:Math.min(L-.5,e.y+1)};if(e.grp){if(!grpMap[e.grp])grpMap[e.grp]=uid();n.grp=grpMap[e.grp];}return n;});pushHist();setEls(p=>[...p,...copies]);setSelIds(copies.map(c=>c.id));return;}
       if((ev.key==="Delete"||ev.key==="Backspace")&&selIds.length&&!typing){ev.preventDefault();pushHist();setEls(p=>p.filter(e=>!selIds.includes(e.id)));setSelIds([]);return;}
       if(ev.key.startsWith("Arrow")&&selIds.length&&!typing){
         ev.preventDefault();
@@ -653,7 +661,7 @@ function App(){
     return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
-  function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="2 6"/>);}return <g>{a}</g>;}
+  function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={2.6} strokeDasharray="8 5"/>);}return <g>{a}</g>;}
   function roomOutline(){
     const irr=S.irregular;
     if(!irr||irr.wall!=="left")return `M${px(0)} ${px(0)} L${px(W)} ${px(0)} L${px(W)} ${px(L)} L${px(0)} ${px(L)} Z`;
@@ -832,7 +840,7 @@ function App(){
           <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={svgDown} style={{touchAction:"none",maxWidth:"none"}}>
             <g transform={gT}>
               <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
-              {gridLines()}{divisorias()}{els.map(renderEl)}{puertas()}{escalaBar()}{alturas()}
+              {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
             </g>
           </svg>

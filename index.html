@@ -154,10 +154,7 @@ const SALONES={
     doors:{green:[["top",5.38,2.12,2.65],["top",8.67,2.12,2.65],["left",6.91,4.46,2.65],["left",21.60,4.46,2.65],["left",36.29,4.46,2.65]],
            red:[["right",6.90,2.13],["right",21.59,2.13],["right",36.28,2.13]],
            porton:[["top",12.42,3.20,3.0]]},
-    alturas:{centro:"6", lateral:"4,10", violeta:{ing:1.5,back:1.5,side:1.5}, naranja:{ing:2.6,back:2.6,side:2.6}, viga:{inset:3.5, kg:"100 kg/m lineal"}},
-    foyer:{depth:7.25, y0:0,
-      seq:[[0.95,"w"],[1.36,"w"],[2.5,"v"],[1.36,"w"],[2.13,"w"],[1.36,"w"],[2.5,"v"],[1.36,"w"],[2.13,"w"],[1.36,"w"],[2.5,"v"],[1.36,"w"],[2.13,"w"],[1.36,"w"],[2.5,"v"],[1.36,"w"],[2.13,"w"],[1.36,"w"],[2.5,"v"],[1.36,"w"],[2.9,"w"]],
-      porton:[-7.25,0,-7.25,2.5]}},
+    alturas:{centro:"6", lateral:"4,10", violeta:{ing:1.5,back:1.5,side:1.5}, naranja:{ing:2.6,back:2.6,side:2.6}, viga:{inset:3.5, kg:"100 kg/m lineal"}}},
   alamos:{nombre:"Los Álamos",w:13.15,total:29.49,divThick:0.1,
     sections:[[0,7.32],[7.42,14.70],[14.80,22.08],[22.18,29.49]],
     combos:[
@@ -215,7 +212,6 @@ function App(){
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
-  const [showFoyer,setShowFoyer]=useState(false);
   const [preview,setPreview]=useState(false);
   useEffect(()=>{document.body.classList.toggle("previewing",preview);const t=setTimeout(()=>fitScale(),30);return()=>clearTimeout(t);},[preview]);
   const [exportOpen,setExportOpen]=useState(false);
@@ -237,8 +233,7 @@ function App(){
   const [,force]=useReducer(x=>x+1,0);
 
   const W=room.w, L=room.l;
-  const FOY=(showFoyer&&S.foyer)?S.foyer.depth:0;
-  const contentW=PAD*2+(W+FOY)*scale, contentH=PAD*2+L*scale+30;
+  const contentW=PAD*2+W*scale, contentH=PAD*2+L*scale+30;
   const hh=(rot===0||rot===180);
   const svgW=hh?contentW:contentH, svgH=hh?contentH:contentW;
   const gT=rot===0?"":rot===90?`translate(${contentH},0) rotate(90)`:rot===180?`translate(${contentW},${contentH}) rotate(180)`:`translate(0,${contentW}) rotate(270)`;
@@ -251,17 +246,17 @@ function App(){
     const el=centerRef.current; if(!el)return;
     const availW=el.clientWidth-24;
     const availH=Math.max(320,window.innerHeight-210);
-    const dimW=hh?(W+FOY):L, dimH=hh?L:(W+FOY);
+    const dimW=hh?W:L, dimH=hh?L:W;
     const extraW=hh?0:30, extraH=hh?30:0;
     const sW=(availW-2*PAD-extraW)/dimW, sH=(availH-2*PAD-extraH)/dimH;
     let s=Math.min(sW,sH);
     if(!isFinite(s)||s<=0)return;
     setScale(Math.max(7,Math.min(40,Math.floor(s))));
   }
-  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview,showFoyer]);
+  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview]);
   useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[rot,W,L]);
   function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];const delta=off-ys;pushHist();setEls(p=>p.map(e=>({...e,y:e.y+delta})));setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setSelIds([]);flash(S.nombre+" · "+c.label);}
-  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);setRot(270);setShowFoyer(false);flash("Salón: "+sa.nombre);}
+  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
 
   // ---- historial ----
   function pushHist(){const h=histRef.current;h.past.push(elsRef.current);if(h.past.length>120)h.past.shift();h.future=[];force();}
@@ -323,7 +318,7 @@ function App(){
     else if(rot===90){cx=sy;cy=contentH-sx;}
     else if(rot===180){cx=contentW-sx;cy=contentH-sy;}
     else{cx=contentW-sy;cy=sx;}
-    return {x:(cx-PAD)/scale-FOY,y:(cy-PAD)/scale};
+    return {x:(cx-PAD)/scale,y:(cy-PAD)/scale};
   }
 
   // ---- arrastre (individual o grupo) ----
@@ -495,17 +490,9 @@ function App(){
     }
     let pts=lattice(sepX,sepY), chosen;
     if(c.forma==="circ"){
-      let fu=1;
-      if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(sepX*f,sepY*f);if(p.length<gen.mesas)break;pts=p;fu=f;}}
-      const eps=sepX*fu*0.4, Lp=[],Cp=[];
-      pts.forEach(p=>{if(Math.abs(p.x-W/2)<eps)Cp.push(p);else if(p.x<W/2)Lp.push(p);});
-      const ord=(a,b)=>(a.y-b.y)||(a.x-b.x); Lp.sort(ord); Cp.sort(ord);
-      const K=Math.floor(gen.mesas/2), extra=gen.mesas-2*K;
-      let leftSel=Lp;
-      if(Lp.length>K){leftSel=[];const st=Lp.length/K;for(let i=0;i<K;i++)leftSel.push(Lp[Math.floor(i*st)]);}
-      chosen=[];
-      leftSel.forEach(p=>{chosen.push({x:p.x,y:p.y});chosen.push({x:W-p.x,y:p.y});});
-      if(extra===1){if(Cp.length)chosen.push(Cp[Math.floor(Cp.length/2)]);else{const rem=Lp.find(p=>!leftSel.includes(p));if(rem)chosen.push(rem);}}
+      if(pts.length>gen.mesas){for(let f=1.05;f<=5;f+=0.05){const p=lattice(sepX*f,sepY*f);if(p.length<gen.mesas)break;pts=p;}}
+      if(pts.length>gen.mesas){const st=pts.length/gen.mesas;chosen=[];for(let i=0;i<gen.mesas;i++)chosen.push(pts[Math.floor(i*st)]);}
+      else chosen=pts;
     } else { chosen=pts.slice(0,gen.mesas); }
     chosen.forEach(s=>out.push(mk(gen.tipoMesa,{x:s.x,y:s.y,rot:rotMesa})));
     const placed=chosen.length;
@@ -703,26 +690,6 @@ function App(){
     S.doors.red.forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#dc2626","r"+i);if(s)a.push(s);});
     return <g>{a}</g>;
   }
-  function foyerRender(){
-    if(!(showFoyer&&S.foyer))return null;
-    const f=S.foyer, d=f.depth, rec=0.5, a=[], PY=v=>px(v-off);
-    let y=f.y0; const pts=[[0,f.y0],[-d,f.y0]], win=[];
-    f.seq.forEach(([len,t])=>{
-      if(t==="v"){pts.push([-d+rec,y],[-d+rec,y+len],[-d,y+len]);win.push([-d+rec,y,-d+rec,y+len]);}
-      else pts.push([-d,y+len]);
-      y+=len;
-    });
-    pts.push([0,y]);
-    let path=`M${px(pts[0][0])} ${PY(pts[0][1])}`;
-    for(let i=1;i<pts.length;i++)path+=` L${px(pts[i][0])} ${PY(pts[i][1])}`;
-    path+=" Z";
-    a.push(<path key="fo" d={path} fill="#f8fafc" stroke="#1e3a5f" strokeWidth={2}/>);
-    win.forEach((w,i)=>a.push(<line key={"fw"+i} x1={px(w[0])} y1={PY(w[1])} x2={px(w[2])} y2={PY(w[3])} stroke="#7dd3fc" strokeWidth={5} strokeLinecap="round"/>));
-    if(f.porton)a.push(<line key="fp" x1={px(f.porton[0])} y1={PY(f.porton[1])} x2={px(f.porton[2])} y2={PY(f.porton[3])} stroke="#0e7490" strokeWidth={6} strokeLinecap="round"/>);
-    const my=f.y0+(y-f.y0)/2;
-    a.push(<text key="fl" x={px(-d/2)} y={PY(my)} textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="700" fill="#94a3b8" fontFamily="var(--mono)" transform={`rotate(${TR-90} ${px(-d/2)} ${PY(my)})`}>FOYER</text>);
-    return <g style={{pointerEvents:"none"}}>{a}</g>;
-  }
   function alturas(){
     if(!showAlturas||!S.alturas)return null;
     const A=S.alturas,a=[],V=A.violeta,N=A.naranja,irr=S.irregular;
@@ -799,7 +766,6 @@ function App(){
       <div className="roomcfg">
         <label>Salón<select value={salonKey} onChange={e=>changeSalon(e.target.value)}>{Object.entries(SALONES).map(([k,v])=><option key={k} value={k}>{v.nombre}</option>)}</select></label>
         <label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>
-        {S.foyer&&<label style={{flexDirection:"row",alignItems:"center",gap:6,alignSelf:"flex-end",paddingBottom:6,whiteSpace:"nowrap"}}><input type="checkbox" checked={showFoyer} onChange={e=>setShowFoyer(e.target.checked)}/> Foyer</label>}
         <label>Ancho (m)<input type="number" value={room.w} step={0.5} onChange={e=>setRoom(r=>({...r,w:Math.max(2,+e.target.value)}))}/></label>
         <label>Largo (m)<input type="number" value={room.l} step={0.5} onChange={e=>setRoom(r=>({...r,l:Math.max(2,+e.target.value)}))}/></label>
         <div className="head-actions"><button className="btn btn-ghost" onClick={()=>setPreview(true)}><Ic d={I.eye} s={15}/> Previsualizar</button><button className="btn btn-ghost" onClick={()=>setExportOpen(true)}><Ic d={I.download} s={15}/> Exportar Plano</button></div>
@@ -873,12 +839,9 @@ function App(){
         <div className="canvas-box">
           <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={svgDown} style={{touchAction:"none",maxWidth:"none"}}>
             <g transform={gT}>
-              <g transform={`translate(${FOY*scale},0)`}>
-              {foyerRender()}
               <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
               {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
-              </g>
             </g>
           </svg>
         </div>

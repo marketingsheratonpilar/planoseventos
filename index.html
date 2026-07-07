@@ -154,7 +154,10 @@ const SALONES={
     doors:{green:[["top",5.38,2.12,2.65],["top",8.67,2.12,2.65],["left",6.91,4.46,2.65],["left",21.60,4.46,2.65],["left",36.29,4.46,2.65]],
            red:[["right",6.90,2.13],["right",21.59,2.13],["right",36.28,2.13]],
            porton:[["top",12.42,3.20,3.0]]},
-    alturas:{centro:"6", lateral:"4,10", violeta:{ing:1.5,back:1.5,side:1.5}, naranja:{ing:2.6,back:2.6,side:2.6}, viga:{inset:3.5, kg:"100 kg/m lineal"}}},
+    alturas:{centro:"6", lateral:"4,10", violeta:{ing:1.5,back:1.5,side:1.5}, naranja:{ing:2.6,back:2.6,side:2.6}, viga:{inset:3.5, kg:"100 kg/m lineal"}},
+    foyer:{depth:6.98, y0:0, len:40.22, intDepth:1.15, porton:2.5, portonEnd:"high",
+      windows:[[5.61,8.11],[12.96,15.46],[20.31,22.81],[27.66,30.16],[35.01,37.51]],
+      intWalls:[[12.25,16.25],[26.95,30.95]]}},
   alamos:{nombre:"Los Álamos",w:13.15,total:29.49,divThick:0.1,
     sections:[[0,7.32],[7.42,14.70],[14.80,22.08],[22.18,29.49]],
     combos:[
@@ -212,15 +215,16 @@ function App(){
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
+  const [showFoyer,setShowFoyer]=useState(false);
   const [preview,setPreview]=useState(false);
+  const [leftW,setLeftW]=useState(248);
+  const [rightW,setRightW]=useState(288);
   useEffect(()=>{document.body.classList.toggle("previewing",preview);const t=setTimeout(()=>fitScale(),30);return()=>clearTimeout(t);},[preview]);
   const [exportOpen,setExportOpen]=useState(false);
   const [expFmt,setExpFmt]=useState("png");
   const [expResumen,setExpResumen]=useState(false);
   const [exportPreview,setExportPreview]=useState("");
-  useEffect(()=>{if(!exportOpen){setExportPreview("");return;}const t=setTimeout(()=>{const svg=buildExportSVG();setExportPreview(svg?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg):"");},70);return()=>clearTimeout(t);},[exportOpen,els,scale,rot,doc,expResumen,salonKey,comboIdx,showAlturas,showSillas,leftW,rightW]);
-  const [leftW,setLeftW]=useState(248);
-  const [rightW,setRightW]=useState(288);
+  useEffect(()=>{if(!exportOpen){setExportPreview("");return;}const t=setTimeout(()=>{const svg=buildExportSVG();setExportPreview(svg?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg):"");},70);return()=>clearTimeout(t);},[exportOpen,els,scale,rot,doc,expResumen,salonKey,comboIdx,showAlturas,showSillas]);
   function startResize(side,e){e.preventDefault();const sx=e.clientX,sL=leftW,sR=rightW;const mv=ev=>{if(side==="left")setLeftW(Math.max(190,Math.min(460,sL+(ev.clientX-sx))));else setRightW(Math.max(210,Math.min(520,sR-(ev.clientX-sx))));};const up=()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);document.body.style.cursor="";};window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);document.body.style.cursor="col-resize";}
   const [marquee,setMarquee]=useState(null);
   const [gen,setGen]=useState({modo:"mesas",tipoMesa:"redonda_180",mesas:0,apoyo:0,pistaCols:0,pistaRows:0,escCols:0,escRows:0,pared:"arriba",barras:0,entelar:false,sillasFilas:0,sillasCols:0,pasillos:0});
@@ -233,7 +237,8 @@ function App(){
   const [,force]=useReducer(x=>x+1,0);
 
   const W=room.w, L=room.l;
-  const contentW=PAD*2+W*scale, contentH=PAD*2+L*scale+30;
+  const FOY=(showFoyer&&S.foyer)?S.foyer.depth:0;
+  const contentW=PAD*2+(W+FOY)*scale, contentH=PAD*2+L*scale+30;
   const hh=(rot===0||rot===180);
   const svgW=hh?contentW:contentH, svgH=hh?contentH:contentW;
   const gT=rot===0?"":rot===90?`translate(${contentH},0) rotate(90)`:rot===180?`translate(${contentW},${contentH}) rotate(180)`:`translate(0,${contentW}) rotate(270)`;
@@ -246,17 +251,17 @@ function App(){
     const el=centerRef.current; if(!el)return;
     const availW=el.clientWidth-24;
     const availH=Math.max(320,window.innerHeight-210);
-    const dimW=hh?W:L, dimH=hh?L:W;
+    const dimW=hh?(W+FOY):L, dimH=hh?L:(W+FOY);
     const extraW=hh?0:30, extraH=hh?30:0;
     const sW=(availW-2*PAD-extraW)/dimW, sH=(availH-2*PAD-extraH)/dimH;
     let s=Math.min(sW,sH);
     if(!isFinite(s)||s<=0)return;
     setScale(Math.max(7,Math.min(40,Math.floor(s))));
   }
-  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview]);
+  useEffect(()=>{fitScale();},[salonKey,comboIdx,rot,W,L,preview,showFoyer]);
   useEffect(()=>{const h=()=>fitScale();window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[rot,W,L]);
   function changeCombo(idx){const c=S.combos[idx];const ys=S.sections[c.from-1][0],ye=S.sections[c.to-1][1];const delta=off-ys;pushHist();setEls(p=>p.map(e=>({...e,y:e.y+delta})));setComboIdx(idx);setRoom(r=>({...r,l:ye-ys}));setOff(ys);setSelIds([]);flash(S.nombre+" · "+c.label);}
-  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);flash("Salón: "+sa.nombre);}
+  function changeSalon(key){const sa=SALONES[key];const last=sa.combos.length-1;const c=sa.combos[last];const ys=sa.sections[c.from-1][0],ye=sa.sections[c.to-1][1];setSalonKey(key);setComboIdx(last);setRoom({w:sa.w,l:ye-ys});setOff(ys);setEls([]);setSelIds([]);setDoc(null);setShowFoyer(false);flash("Salón: "+sa.nombre);}
 
   // ---- historial ----
   function pushHist(){const h=histRef.current;h.past.push(elsRef.current);if(h.past.length>120)h.past.shift();h.future=[];force();}
@@ -318,7 +323,7 @@ function App(){
     else if(rot===90){cx=sy;cy=contentH-sx;}
     else if(rot===180){cx=contentW-sx;cy=contentH-sy;}
     else{cx=contentW-sy;cy=sx;}
-    return {x:(cx-PAD)/scale,y:(cy-PAD)/scale};
+    return {x:(cx-PAD)/scale-FOY,y:(cy-PAD)/scale};
   }
 
   // ---- arrastre (individual o grupo) ----
@@ -714,6 +719,21 @@ function App(){
     return <g style={{pointerEvents:"none"}}>{a}</g>;
   }
   function escalaBar(){const y=px(L)+22,cx=px(2.5);return <g fontFamily="var(--mono)"><line x1={px(0)} y1={y} x2={px(5)} y2={y} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(0)} y1={y-4} x2={px(0)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><line x1={px(5)} y1={y-4} x2={px(5)} y2={y+4} stroke="#1e3a5f" strokeWidth={2}/><rect x={cx-30} y={y-8} width={60} height={16} fill="#fff"/><text x={cx} y={y} textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="700" fill="#1e3a5f">5 metros</text></g>;}
+  function foyerRender(){
+    if(!(showFoyer&&S.foyer))return null;
+    const f=S.foyer, d=f.depth, a=[], PY=v=>px(v-off);
+    const y0=f.y0, y1=f.y0+f.len;
+    a.push(<path key="fbf" d={`M${px(0)} ${PY(y0)} L${px(-d)} ${PY(y0)} L${px(-d)} ${PY(y1)} L${px(0)} ${PY(y1)} Z`} fill="#fff" stroke="none"/>);
+    if(grid){
+      for(let gx=Math.ceil(-d);gx<=0;gx++)a.push(<line key={"fgx"+gx} x1={px(gx)} y1={PY(y0)} x2={px(gx)} y2={PY(y1)} stroke={gx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={gx%5===0?1:.6}/>);
+      for(let gy=Math.ceil(y0);gy<=y1;gy++)a.push(<line key={"fgy"+gy} x1={px(-d)} y1={PY(gy)} x2={px(0)} y2={PY(gy)} stroke={gy%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={gy%5===0?1:.6}/>);
+    }
+    a.push(<path key="fbw" d={`M${px(-d)} ${PY(y0)} L${px(-d)} ${PY(y1)} L${px(0)} ${PY(y1)}`} fill="none" stroke="#1e3a5f" strokeWidth={2} strokeLinejoin="miter"/>);
+    (f.intWalls||[]).forEach((w,i)=>a.push(<rect key={"iw"+i} x={px(-f.intDepth)} y={PY(w[0])} width={f.intDepth*scale} height={(w[1]-w[0])*scale} fill="#111827"/>));
+    (f.windows||[]).forEach((w,i)=>a.push(<line key={"wn"+i} x1={px(-d)} y1={PY(w[0])} x2={px(-d)} y2={PY(w[1])} stroke="#7dd3fc" strokeWidth={5}/>));
+    if(f.porton){const yp=f.portonEnd==="high"?y1:y0;a.push(<line key="pt" x1={px(-d/2-f.porton/2)} y1={PY(yp)} x2={px(-d/2+f.porton/2)} y2={PY(yp)} stroke="#0e7490" strokeWidth={6} strokeLinecap="round"/>);}
+    return <g style={{pointerEvents:"none"}}>{a}</g>;
+  }
 
   const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":(CAT[t]?.nm||t);
   function escXml(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -766,6 +786,7 @@ function App(){
       <div className="roomcfg">
         <label>Salón<select value={salonKey} onChange={e=>changeSalon(e.target.value)}>{Object.entries(SALONES).map(([k,v])=><option key={k} value={k}>{v.nombre}</option>)}</select></label>
         <label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>
+        {S.foyer&&<label>Foyer<input type="checkbox" checked={showFoyer} onChange={e=>setShowFoyer(e.target.checked)} style={{width:"auto",alignSelf:"flex-start",marginTop:4}}/></label>}
         <label>Ancho (m)<input type="number" value={room.w} step={0.5} onChange={e=>setRoom(r=>({...r,w:Math.max(2,+e.target.value)}))}/></label>
         <label>Largo (m)<input type="number" value={room.l} step={0.5} onChange={e=>setRoom(r=>({...r,l:Math.max(2,+e.target.value)}))}/></label>
         <div className="head-actions"><button className="btn btn-ghost" onClick={()=>setPreview(true)}><Ic d={I.eye} s={15}/> Previsualizar</button><button className="btn btn-ghost" onClick={()=>setExportOpen(true)}><Ic d={I.download} s={15}/> Exportar Plano</button></div>
@@ -839,9 +860,12 @@ function App(){
         <div className="canvas-box">
           <svg ref={svgRef} width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerDown={svgDown} style={{touchAction:"none",maxWidth:"none"}}>
             <g transform={gT}>
+              <g transform={`translate(${FOY*scale},0)`}>
+              {foyerRender()}
               <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
               {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
+              </g>
             </g>
           </svg>
         </div>
@@ -851,6 +875,7 @@ function App(){
           <span><span className="dot" style={{background:"#dc2626"}}></span> Ingreso Back</span>
           <span><span className="dot" style={{background:"#f59e0b"}}></span> Puertas Divisorias</span>
           <span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>
+          {showFoyer&&S.foyer&&<span><span className="dot" style={{background:"#7dd3fc"}}></span> Ventanas</span>}
           {showAlturas&&S.alturas&&<><span><span className="dot" style={{background:"#fdba74"}}></span> Altura {S.alturas.centro} m</span><span><span className="dot" style={{background:"#c4b5fd"}}></span> Altura {S.alturas.lateral} m</span>{S.alturas.viga&&<span><span className="dot" style={{background:"#111827",borderRadius:0}}></span> Viga (aguanta 100 kg por metro lineal)</span>}</>}
           <span>Salón: {fmt(W)} × {fmt(L)} m · {fmt(W*L)} m²</span>
         </div>

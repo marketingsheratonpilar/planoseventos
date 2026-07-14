@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -190,6 +190,8 @@ const SALONES={
     doors:{green:[["left",3.70,1.85,2.65]], red:[["top",11.70,2.23]], porton:null},
     doorSegs:[[4.27,11.25,6.25,11.25,"#16a34a"]],
     winSegs:[[19.27,11.25,10.19,15.17],[10.19,15.17,6.25,11.25],[0,11.25,4.27,11.25]],
+    columns:[[11.70,5.31],[11.70,11.86],[4.03,2.07],[4.03,5.31]], colSize:1.17,
+    intWalls:[[4.03,0,4.03,8.05],[4.03,8.05,9.82,8.05],[13.45,8.05,19.24,8.05]],
     alturas:null},
 };
 
@@ -715,6 +717,12 @@ function App(){
     if(!S.winSegs)return null;
     return <g style={{pointerEvents:"none"}}>{S.winSegs.map((w,i)=><line key={i} x1={px(w[0])} y1={px(w[1]-off)} x2={px(w[2])} y2={px(w[3]-off)} stroke="#7dd3fc" strokeWidth={5}/>)}</g>;
   }
+  function fixtures(){
+    if(!S.columns&&!S.intWalls)return null;const a=[];const s=(S.colSize||1.17)/2;
+    (S.intWalls||[]).forEach((w,i)=>a.push(<line key={"iw"+i} x1={px(w[0])} y1={px(w[1]-off)} x2={px(w[2])} y2={px(w[3]-off)} stroke="#1e3a5f" strokeWidth={4} strokeLinecap="round"/>));
+    (S.columns||[]).forEach((c,i)=>a.push(<polygon key={"col"+i} points={`${px(c[0])},${px(c[1]-off-s)} ${px(c[0]+s)},${px(c[1]-off)} ${px(c[0])},${px(c[1]-off+s)} ${px(c[0]-s)},${px(c[1]-off)}`} fill="#9ca3af" stroke="#475569" strokeWidth={1.2}/>));
+    return <g style={{pointerEvents:"none"}}>{a}</g>;
+  }
   function alturas(){
     if(!showAlturas||!S.alturas)return null;
     const A=S.alturas,a=[],V=A.violeta,N=A.naranja,irr=S.irregular;
@@ -884,7 +892,7 @@ function App(){
               <g transform={`translate(${FOY*scale},0)`}>
               {foyerRender()}
               <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
-              {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{salonWindows()}{escalaBar()}{alturas()}
+              {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{salonWindows()}{fixtures()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
               </g>
             </g>

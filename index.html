@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -183,6 +183,14 @@ const SALONES={
       solid:[[-6.33,7.13,-6.33,26.83],[-6.33,26.83,0,26.83]],
       dotted:[[-6.33,0,0,0],[-6.33,0,-6.33,7.13]],
       porton:[-4.98,26.83,-2.04,26.83]}},
+  dongiovanni:{nombre:"Don Giovanni Ristorante",w:19.27,total:15.17,divThick:0.1,
+    sections:[[0,15.17]],
+    combos:[{label:"Completo",from:1,to:1}],
+    outline:[[0,0],[19.27,0],[19.27,11.25],[10.19,15.17],[6.25,11.25],[0,11.25]],
+    doors:{green:[["left",3.70,1.85,2.65]], red:[["top",11.70,2.23]], porton:null},
+    doorSegs:[[4.27,11.25,6.25,11.25,"#16a34a"]],
+    winSegs:[[19.27,11.25,10.19,15.17],[10.19,15.17,6.25,11.25],[0,11.25,4.27,11.25]],
+    alturas:null},
 };
 
 let _id=1; const uid=()=>"e"+(_id++);
@@ -674,6 +682,7 @@ function App(){
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
   function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={2.6} strokeDasharray="8 5"/>);}return <g>{a}</g>;}
   function roomOutline(){
+    if(S.outline){const p=S.outline;let s=`M${px(p[0][0])} ${px(p[0][1]-off)}`;for(let i=1;i<p.length;i++)s+=` L${px(p[i][0])} ${px(p[i][1]-off)}`;return s+" Z";}
     const irr=S.irregular;
     if(!irr||irr.wall!=="left")return `M${px(0)} ${px(0)} L${px(W)} ${px(0)} L${px(W)} ${px(L)} L${px(0)} ${px(L)} Z`;
     const d=irr.depth,y0=off,y1=off+L;
@@ -699,7 +708,12 @@ function App(){
     S.doors.green.forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#16a34a","g"+i);if(s)a.push(s);});
     (S.doors.porton||[]).forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#0e7490","p"+i);if(s)a.push(s);});
     S.doors.red.forEach((d,i)=>{const s=doorSeg(d[0],d[1],d[2],"#dc2626","r"+i);if(s)a.push(s);});
+    (S.doorSegs||[]).forEach((d,i)=>a.push(<line key={"ds"+i} x1={px(d[0])} y1={px(d[1]-off)} x2={px(d[2])} y2={px(d[3]-off)} stroke={d[4]} strokeWidth={5} strokeLinecap="round"/>));
     return <g>{a}</g>;
+  }
+  function salonWindows(){
+    if(!S.winSegs)return null;
+    return <g style={{pointerEvents:"none"}}>{S.winSegs.map((w,i)=><line key={i} x1={px(w[0])} y1={px(w[1]-off)} x2={px(w[2])} y2={px(w[3]-off)} stroke="#7dd3fc" strokeWidth={5}/>)}</g>;
   }
   function alturas(){
     if(!showAlturas||!S.alturas)return null;
@@ -870,7 +884,7 @@ function App(){
               <g transform={`translate(${FOY*scale},0)`}>
               {foyerRender()}
               <path d={roomOutline()} fill="#fff" stroke="#1e3a5f" strokeWidth={2}/>
-              {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{escalaBar()}{alturas()}
+              {gridLines()}{els.map(renderEl)}{divisorias()}{puertas()}{salonWindows()}{escalaBar()}{alturas()}
               {marquee&&<rect className="no-export" x={px(Math.min(marquee.x0,marquee.x1))} y={px(Math.min(marquee.y0,marquee.y1))} width={Math.abs(marquee.x1-marquee.x0)*scale} height={Math.abs(marquee.y1-marquee.y0)*scale} fill="rgba(30,58,95,.08)" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="4 3"/>}
               </g>
             </g>
@@ -882,7 +896,7 @@ function App(){
           <span><span className="dot" style={{background:"#dc2626"}}></span> Ingreso Back</span>
           <span><span className="dot" style={{background:"#f59e0b"}}></span> Puertas Divisorias</span>
           <span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>
-          {showFoyer&&S.foyer&&S.foyer.windows&&<span><span className="dot" style={{background:"#7dd3fc"}}></span> Ventanas</span>}
+          {((showFoyer&&S.foyer&&S.foyer.windows)||S.winSegs)&&<span><span className="dot" style={{background:"#7dd3fc"}}></span> Ventanas</span>}
           {showAlturas&&S.alturas&&<><span><span className="dot" style={{background:"#fdba74"}}></span> Altura {S.alturas.centro} m</span><span><span className="dot" style={{background:"#c4b5fd"}}></span> Altura {S.alturas.lateral} m</span>{S.alturas.viga&&<span><span className="dot" style={{background:"#111827",borderRadius:0}}></span> Viga (aguanta 100 kg por metro lineal)</span>}</>}
           <span>Salón: {fmt(W)} × {fmt(L)} m · {fmt(W*L)} m²</span>
         </div>

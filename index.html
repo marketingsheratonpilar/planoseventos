@@ -195,8 +195,11 @@ const SALONES={
     alturas:null},
 };
 
-let _id=1; const uid=()=>"e"+(_id++);
-const syncIds=(arr)=>{let m=0;(arr||[]).forEach(e=>{const n=parseInt(String(e&&e.id||"").replace(/^e/,""),10);if(!isNaN(n)&&n>m)m=n;});if(m>=_id)_id=m+1;};
+let _id=1;
+const uid=()=>"e"+Date.now().toString(36)+"_"+(_id++).toString(36)+Math.random().toString(36).slice(2,6);
+// Reasigna IDs únicos a todo plano que se abre: garantiza independencia de cada elemento
+// y repara planos guardados con IDs duplicados. Los grupos manuales se preservan.
+const normEls=(arr)=>{const gm={};return (arr||[]).map(e=>{const n={...e,id:uid()};if(e.grp){if(!gm[e.grp])gm[e.grp]="g"+uid();n.grp=gm[e.grp];}return n;});};
 const snap=(v,s)=>s?Math.round(v/s)*s:v;
 const fmt=(n)=>Number(Number(n).toFixed(2)).toString().replace(".",",");
 const r2=(n)=>Number(Number(n).toFixed(2));
@@ -287,8 +290,8 @@ function App(){
 
   function mk(tipo,ex={}){
     const id=uid(); const x=ex.x??W/2, y=ex.y??L/2;
-    if(tipo==="escenario"){const c=ex.cols??gen.escCols,r=ex.rows??gen.escRows;return{id,tipo,x,y,rot:ex.rot??0,cols:c,rows:r,w:c*MOD_ESC.w,h:r*MOD_ESC.h,modW:MOD_ESC.w,modH:MOD_ESC.h};}
-    if(tipo==="pista"){const c=ex.cols??gen.pistaCols,r=ex.rows??gen.pistaRows;return{id,tipo,x,y,rot:0,cols:c,rows:r,w:c*MOD_PISTA.w,h:r*MOD_PISTA.h,modW:MOD_PISTA.w,modH:MOD_PISTA.h};}
+    if(tipo==="escenario"){const c=ex.cols??(gen.escCols||4),r=ex.rows??(gen.escRows||2);return{id,tipo,x,y,rot:ex.rot??0,cols:c,rows:r,w:c*MOD_ESC.w,h:r*MOD_ESC.h,modW:MOD_ESC.w,modH:MOD_ESC.h};}
+    if(tipo==="pista"){const c=ex.cols??(gen.pistaCols||4),r=ex.rows??(gen.pistaRows||4);return{id,tipo,x,y,rot:0,cols:c,rows:r,w:c*MOD_PISTA.w,h:r*MOD_PISTA.h,modW:MOD_PISTA.w,modH:MOD_PISTA.h};}
     if(tipo==="auditorio"){const cols=ex.cols??10,rows=ex.rows??6,aisles=ex.aisles??1,aw=ex.aisleW??1.2;const d=audDims(cols,rows,aisles,aw);return{id,tipo,x,y,rot:ex.rot??0,cols,rows,aisles,aisleW:aw,w:d.w,h:d.h};}
     if(tipo==="aereo"){return{id,tipo,x,y,rot:0,w:ex.w??4,h:ex.h??4};}
     if(tipo==="entelado"){return{id,tipo,x,y,rot:ex.rot??0,w:ex.w??5,h:0.3};}
@@ -359,7 +362,7 @@ function App(){
       const grpMap={};
       const copies=elsRef.current.filter(el=>ids.includes(el.id)).map(el=>{const n={...el,id:uid()};if(el.grp){if(!grpMap[el.grp])grpMap[el.grp]=uid();n.grp=grpMap[el.grp];}return n;});
       setEls(p=>[...p,...copies]);ids=copies.map(c=>c.id);setSelIds(ids);startEls=copies;
-    } else { startEls=elsRef.current.filter(el=>ids.includes(el.id)); }
+    } else { const seen=new Set(); startEls=elsRef.current.filter(el=>{if(!ids.includes(el.id)||seen.has(el.id))return false;seen.add(el.id);return true;}); }
     const starts={}; startEls.forEach(el=>{starts[el.id]={x:el.x,y:el.y};});
     drag.current={ids,sx:e.clientX,sy:e.clientY,starts};
     e.currentTarget.setPointerCapture&&e.currentTarget.setPointerCapture(e.pointerId);
@@ -532,7 +535,7 @@ function App(){
   const limpiar=()=>{pushHist();setEls([]);setSelIds([]);};
 
   function guardar(){const n=name.trim();if(!n){flash("Poné un nombre.");return;}const all=store.read();all[n]={salonKey,comboIdx,off,room,els,gen};store.write(all);setSaved(Object.keys(all));flash("Guardado: "+n);}
-  function cargar(n){const d=store.read()[n];if(!d)return;syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
+  function cargar(n){const d=store.read()[n];if(!d)return;pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(normEls(d.els));if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
   function borrar(n){const all=store.read();delete all[n];store.write(all);setSaved(Object.keys(all));}
   function descargarArchivo(){
     const obj={v:1,salonKey,comboIdx,off,room,els,gen};
@@ -545,7 +548,7 @@ function App(){
   function abrirArchivo(e){
     const file=e.target.files[0]; if(!file)return;
     const rd=new FileReader();
-    rd.onload=()=>{try{const d=JSON.parse(rd.result);syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(file.name.replace(/\.plano\.json$|\.json$/i,""));flash("Plano cargado: "+file.name);}catch(err){flash("Archivo inválido.");}};
+    rd.onload=()=>{try{const d=JSON.parse(rd.result);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(normEls(d.els));if(d.gen)setGen(d.gen);setSelIds([]);setName(file.name.replace(/\.plano\.json$|\.json$/i,""));flash("Plano cargado: "+file.name);}catch(err){flash("Archivo inválido.");}};
     rd.readAsText(file); e.target.value="";
   }
   const planObj=()=>({v:1,salonKey,comboIdx,off,room,els,gen});
@@ -586,7 +589,7 @@ function App(){
     setDrive({mode:"openFiles",evento,plans,rows:drive.rows,eventos:drive.eventos});
   }
   function loadDriveFile(row){
-    try{const d=JSON.parse(row.data);syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");
+    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(normEls(d.els));if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");
       const meta=(drive.rows||[]).filter(r=>r.evento===row.evento).find(r=>r.tipo||r.fecha||r.prota)||{};
       setDoc({evento:row.evento,plano:row.plano,fecha:row.fecha||meta.fecha||"",tipo:row.tipo||meta.tipo||"",prota:row.prota||meta.prota||""});
       flash("Plano abierto: "+row.plano);setDrive(null);}

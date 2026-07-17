@@ -291,6 +291,7 @@ function App(){
     if(tipo==="auditorio"){const cols=ex.cols??10,rows=ex.rows??6,aisles=ex.aisles??1,aw=ex.aisleW??1.2;const d=audDims(cols,rows,aisles,aw);return{id,tipo,x,y,rot:ex.rot??0,cols,rows,aisles,aisleW:aw,w:d.w,h:d.h};}
     if(tipo==="aereo"){return{id,tipo,x,y,rot:0,w:ex.w??4,h:ex.h??4};}
     if(tipo==="entelado"){return{id,tipo,x,y,rot:ex.rot??0,w:ex.w??5,h:0.3};}
+    if(tipo==="tramo_aereo"){return{id,tipo,x,y,rot:ex.rot??0,w:ex.w??5,h:0.3};}
     if(tipo==="texto"){const t=ex.text||"Texto";return{id,tipo,x,y,rot:ex.rot??0,text:t,w:Math.max(1,t.length*0.28),h:0.6};}
     const c=CAT[tipo];
     if(c.forma==="circ")return{id,tipo,x,y,rot:0,d:c.d,w:c.d,h:c.d,sillas:ex.sillas??c.sillas??0};
@@ -673,12 +674,14 @@ function App(){
     else if(e.tipo==="escenario"||e.tipo==="pista"){const st="#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="#e5e7eb" stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{labelSize(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
+    else if(e.tipo==="tramo_aereo"){const len=e.w*scale;inner=<g><line x1={-len/2} y1={0} x2={len/2} y2={0} stroke="#7c3aed" strokeWidth={isS?3.4:2.6} strokeLinecap="round"/><rect x={-len/2} y={-0.45*scale} width={len} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
     else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
     else if(e.tipo==="escalera"){const w=e.w*scale,h=e.h*scale;inner=<g><rect x={-w/2} y={-h/2} width={w} height={h} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2.5:1.4}/><line x1={-w/2} y1={-h/6} x2={w/2} y2={-h/6} stroke="#6b7280" strokeWidth={1}/><line x1={-w/2} y1={h/6} x2={w/2} y2={h/6} stroke="#6b7280" strokeWidth={1}/></g>;}
     else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?labelSize("DJ",e,c.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,c.stroke):e.tipo==="pantalla"?labelSize("PANTALLA",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
-    const bw=(e.tipo==="entelado"?e.w:e.w)*scale, bh=(e.tipo==="entelado"?0.9:e.h)*scale;
+    const fino=(e.tipo==="entelado"||e.tipo==="tramo_aereo");
+    const bw=e.w*scale, bh=(fino?0.9:e.h)*scale;
     return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
@@ -764,7 +767,7 @@ function App(){
     return <g style={{pointerEvents:"none"}}>{a}</g>;
   }
 
-  const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":(CAT[t]?.nm||t);
+  const labelTipo=t=>t==="escenario"?"Escenario":t==="pista"?"Pista de baile":t==="aereo"?"Aéreo de pista":t==="entelado"?"Entelado de pared":t==="tramo_aereo"?"Tramo Aéreo":(CAT[t]?.nm||t);
   function escXml(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
   function buildExportSVG(){
     if(!svgRef.current) return "";
@@ -857,6 +860,7 @@ function App(){
           <Pal onClick={()=>add("escenario")} nm="Escenario (mod. 2,44 x 1,80)" sw="#ea580c"/>
           <Pal onClick={()=>add("pista")} nm="Pista (mod. 1,20 x 1,20)" sw="#16a34a"/>
           <Pal onClick={()=>add("aereo")} nm="Aéreo de pista" sw="#7c3aed" dash/>
+          <Pal onClick={()=>add("tramo_aereo")} nm="Tramo Aéreo" sw="#7c3aed"/>
           <div className="sec-h" style={{marginTop:10}}>Decoración</div>
           <Pal onClick={()=>add("entelado")} nm="Entelado de pared" sw="#0d9488" wavy/>
           <Pal onClick={addTexto} nm="Texto / aclaración" sw="#7c3aed"/>
@@ -931,7 +935,7 @@ function App(){
               {(selEl.tipo==="escenario"||selEl.tipo==="pista")&&<><StdF label="Cols" size={selEl.w} mod={selEl.modW} on={n=>updH(selEl.id,{cols:n,w:n*selEl.modW})}/><StdF label="Filas" size={selEl.h} mod={selEl.modH} on={n=>updH(selEl.id,{rows:n,h:n*selEl.modH})}/><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.5} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.5} on={n=>updH(selEl.id,{h:n})}/></>}
               {esMesa(selEl.tipo)&&(()=>{const mx=maxSillas(selEl);return <NumF label={mx?("Sillas (máx "+mx+")"):"Sillas"} v={selEl.sillas??0} min={0} max={mx} on={n=>updH(selEl.id,{sillas:n})}/>;})()}
               {["dj","parlante","aereo","barra","pantalla","mesa_editable"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
-              {selEl.tipo==="entelado"&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
+              {(selEl.tipo==="entelado"||selEl.tipo==="tramo_aereo")&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
               {selEl.tipo==="auditorio"&&<><NumF label="Filas" v={selEl.rows} min={1} on={n=>updAud(selEl.id,{rows:n})}/><NumF label="Columnas" v={selEl.cols} min={1} on={n=>updAud(selEl.id,{cols:n})}/><NumF label="Pasillos" v={selEl.aisles} min={0} on={n=>updAud(selEl.id,{aisles:n})}/><NumF label="Pasillo (m)" v={r2(selEl.aisleW)} step={0.1} min={0.3} on={n=>updAud(selEl.id,{aisleW:n})}/></>}
             </div>
             <div style={{display:"flex",gap:6,marginTop:9,flexWrap:"wrap"}}>

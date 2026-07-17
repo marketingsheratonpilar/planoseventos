@@ -196,6 +196,7 @@ const SALONES={
 };
 
 let _id=1; const uid=()=>"e"+(_id++);
+const syncIds=(arr)=>{let m=0;(arr||[]).forEach(e=>{const n=parseInt(String(e&&e.id||"").replace(/^e/,""),10);if(!isNaN(n)&&n>m)m=n;});if(m>=_id)_id=m+1;};
 const snap=(v,s)=>s?Math.round(v/s)*s:v;
 const fmt=(n)=>Number(Number(n).toFixed(2)).toString().replace(".",",");
 const r2=(n)=>Number(Number(n).toFixed(2));
@@ -531,7 +532,7 @@ function App(){
   const limpiar=()=>{pushHist();setEls([]);setSelIds([]);};
 
   function guardar(){const n=name.trim();if(!n){flash("Poné un nombre.");return;}const all=store.read();all[n]={salonKey,comboIdx,off,room,els,gen};store.write(all);setSaved(Object.keys(all));flash("Guardado: "+n);}
-  function cargar(n){const d=store.read()[n];if(!d)return;pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
+  function cargar(n){const d=store.read()[n];if(!d)return;syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);flash("Cargado: "+n);}
   function borrar(n){const all=store.read();delete all[n];store.write(all);setSaved(Object.keys(all));}
   function descargarArchivo(){
     const obj={v:1,salonKey,comboIdx,off,room,els,gen};
@@ -544,7 +545,7 @@ function App(){
   function abrirArchivo(e){
     const file=e.target.files[0]; if(!file)return;
     const rd=new FileReader();
-    rd.onload=()=>{try{const d=JSON.parse(rd.result);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(file.name.replace(/\.plano\.json$|\.json$/i,""));flash("Plano cargado: "+file.name);}catch(err){flash("Archivo inválido.");}};
+    rd.onload=()=>{try{const d=JSON.parse(rd.result);syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(file.name.replace(/\.plano\.json$|\.json$/i,""));flash("Plano cargado: "+file.name);}catch(err){flash("Archivo inválido.");}};
     rd.readAsText(file); e.target.value="";
   }
   const planObj=()=>({v:1,salonKey,comboIdx,off,room,els,gen});
@@ -585,7 +586,7 @@ function App(){
     setDrive({mode:"openFiles",evento,plans,rows:drive.rows,eventos:drive.eventos});
   }
   function loadDriveFile(row){
-    try{const d=JSON.parse(row.data);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");
+    try{const d=JSON.parse(row.data);syncIds(d.els);pushHist();if(d.salonKey)setSalonKey(d.salonKey);if(d.comboIdx!=null)setComboIdx(d.comboIdx);if(d.off!=null)setOff(d.off);if(d.room)setRoom(d.room);setEls(d.els||[]);if(d.gen)setGen(d.gen);setSelIds([]);setName(row.plano||"");
       const meta=(drive.rows||[]).filter(r=>r.evento===row.evento).find(r=>r.tipo||r.fecha||r.prota)||{};
       setDoc({evento:row.evento,plano:row.plano,fecha:row.fecha||meta.fecha||"",tipo:row.tipo||meta.tipo||"",prota:row.prota||meta.prota||""});
       flash("Plano abierto: "+row.plano);setDrive(null);}

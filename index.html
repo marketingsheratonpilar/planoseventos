@@ -190,6 +190,7 @@ const SALONES={
     doors:{green:[["left",3.70,1.85,2.65]], red:[["top",11.70,2.23]], porton:null},
     doorSegs:[[4.27,11.25,6.25,11.25,"#16a34a"]],
     winSegs:[[19.27,11.25,10.19,15.17],[10.19,15.17,6.25,11.25],[0,11.25,4.27,11.25]],
+    hideEntelado:true,
     columns:[[11.70,5.31],[11.70,11.86],[4.03,2.07],[4.03,5.31]], colSize:1.17,
     intWalls:[[4.03,0,4.03,8.05],[4.03,8.05,9.82,8.05],[13.45,8.05,19.24,8.05]],
     alturas:null},
@@ -781,7 +782,9 @@ function App(){
     const headerH=doc?66:34;
     const refs=[{c:"#16a34a",t:"Ingresos"}];
     if(S.doors.porton)refs.push({c:"#0e7490",t:"Portón"});
-    refs.push({c:"#dc2626",t:"Ingreso Back"},{c:"#f59e0b",t:"Puertas divisorias"},{c:"#0d9488",t:"Entelado"});
+    refs.push({c:"#dc2626",t:"Ingreso Back"});
+    if(S.combos.length>1)refs.push({c:"#f59e0b",t:"Puertas divisorias"});
+    if(!S.hideEntelado)refs.push({c:"#0d9488",t:"Entelado"});
     if(showAlturas&&S.alturas){refs.push({c:"#fdba74",t:"Altura "+S.alturas.centro+" m"},{c:"#c4b5fd",t:"Altura "+S.alturas.lateral+" m"});if(S.alturas.viga)refs.push({c:"#111827",t:"Viga (100 kg/m lineal)"});}
     const salonLine=S.nombre+" · "+combo.label;
     let resL=[];
@@ -821,10 +824,8 @@ function App(){
       <div><div className="eyebrow">Sheraton Pilar · Centro de Convenciones</div><div className="title">Planificador de salones — {S.nombre}</div></div>
       <div className="roomcfg">
         <label>Salón<select value={salonKey} onChange={e=>changeSalon(e.target.value)}>{Object.entries(SALONES).map(([k,v])=><option key={k} value={k}>{v.nombre}</option>)}</select></label>
-        <label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>
+        {S.combos.length>1&&<label>Secciones<select value={comboIdx} onChange={e=>changeCombo(+e.target.value)}>{S.combos.map((c,i)=><option key={i} value={i}>{c.label}</option>)}</select></label>}
         {S.foyer&&<label>Foyer<input type="checkbox" checked={showFoyer} onChange={e=>setShowFoyer(e.target.checked)} style={{width:"auto",alignSelf:"flex-start",marginTop:4}}/></label>}
-        <label>Ancho (m)<input type="number" value={room.w} step={0.5} onChange={e=>setRoom(r=>({...r,w:Math.max(2,+e.target.value)}))}/></label>
-        <label>Largo (m)<input type="number" value={room.l} step={0.5} onChange={e=>setRoom(r=>({...r,l:Math.max(2,+e.target.value)}))}/></label>
         <div className="head-actions"><button className="btn btn-ghost" onClick={()=>setPreview(true)}><Ic d={I.eye} s={15}/> Previsualizar</button><button className="btn btn-ghost" onClick={()=>setExportOpen(true)}><Ic d={I.download} s={15}/> Exportar Plano</button></div>
       </div>
     </div>
@@ -889,7 +890,7 @@ function App(){
           <button className="tb" title="Agrupar los elementos seleccionados" disabled={selIds.length<2} onClick={agrupar}><Ic d={I.group} s={15}/> Agrupar</button>
           <button className="tb" title="Desagrupar" disabled={!selGrouped()} onClick={desagrupar}><Ic d={I.ungroup} s={15}/> Desagrupar</button>
           <button className={"tb "+(grid?"on":"off")} title="Mostrar/ocultar grilla" onClick={()=>setGrid(v=>!v)}><Ic d={I.grid} s={15}/> Grilla</button>
-          <button className={"tb "+(showDoors?"on":"off")} title="Mostrar/ocultar divisorias" onClick={()=>setShowDoors(v=>!v)}>Puertas</button>
+          {S.combos.length>1&&<button className={"tb "+(showDoors?"on":"off")} title="Mostrar/ocultar divisorias" onClick={()=>setShowDoors(v=>!v)}>Puertas</button>}
           {S.alturas&&<button className={"tb "+(showAlturas?"on":"off")} title="Mostrar/ocultar alturas de techo, viga y puertas" onClick={()=>setShowAlturas(v=>!v)}>Techo</button>}
           <button className={"tb "+(showSillas?"on":"off")} onClick={()=>setShowSillas(v=>!v)}><Ic d={I.eye} s={15}/> Sillas</button>
           <label className="f" style={{flexDirection:"row",alignItems:"center",gap:5,marginLeft:4}}>Imán<select value={imn} onChange={e=>setImn(+e.target.value)} style={{width:"auto"}}><option value={0}>off</option><option value={0.1}>10 cm</option><option value={0.25}>25 cm</option><option value={0.5}>50 cm</option></select></label>
@@ -910,8 +911,8 @@ function App(){
           <span><span className="dot" style={{background:"#16a34a"}}></span> Ingresos{showAlturas&&" (altura 2,65 m)"}</span>
           {(S.doors.porton||(showFoyer&&S.foyer&&S.foyer.porton))&&<span><span className="dot" style={{background:"#0e7490"}}></span> Portón{S.doors.porton&&showAlturas&&" (3,20 m ancho × 3 m alto)"}</span>}
           <span><span className="dot" style={{background:"#dc2626"}}></span> Ingreso Back</span>
-          <span><span className="dot" style={{background:"#f59e0b"}}></span> Puertas Divisorias</span>
-          <span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>
+          {S.combos.length>1&&<span><span className="dot" style={{background:"#f59e0b"}}></span> Puertas Divisorias</span>}
+          {!S.hideEntelado&&<span><span className="dot" style={{background:"#0d9488"}}></span> Entelado</span>}
           {((showFoyer&&S.foyer&&S.foyer.windows)||S.winSegs)&&<span><span className="dot" style={{background:"#7dd3fc"}}></span> Ventanas</span>}
           {showAlturas&&S.alturas&&<><span><span className="dot" style={{background:"#fdba74"}}></span> Altura {S.alturas.centro} m</span><span><span className="dot" style={{background:"#c4b5fd"}}></span> Altura {S.alturas.lateral} m</span>{S.alturas.viga&&<span><span className="dot" style={{background:"#111827",borderRadius:0}}></span> Viga (aguanta 100 kg por metro lineal)</span>}</>}
           <span>Salón: {fmt(W)} × {fmt(L)} m · {fmt(W*L)} m²</span>

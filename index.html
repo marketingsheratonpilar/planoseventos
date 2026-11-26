@@ -243,6 +243,8 @@ function App(){
   const [imn,setImn]=useState(0.25);
   const [grid,setGrid]=useState(true);
   const [showDoors,setShowDoors]=useState(true);
+  const [editM,setEditM]=useState(null);
+  const COLORS=[{nm:"Gris",fill:"#e5e7eb",stroke:"#6b7280"},{nm:"Azul",fill:"#dbeafe",stroke:"#2563eb"},{nm:"Verde",fill:"#dcfce7",stroke:"#16a34a"},{nm:"Naranja",fill:"#ffedd5",stroke:"#ea580c"}];
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
@@ -262,7 +264,7 @@ function App(){
   const [name,setName]=useState("");
   const [saved,setSaved]=useState([]);
   const [toast,setToast]=useState("");
-  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null), fileRef=useRef(null), centerRef=useRef(null), clip=useRef([]);
+  const svgRef=useRef(null), drag=useRef(null), marqRef=useRef(null), fileRef=useRef(null), centerRef=useRef(null), clip=useRef([]), lastClick=useRef({id:null,t:0});
   const elsRef=useRef(els); elsRef.current=els;
   const histRef=useRef({past:[],future:[]});
   const [,force]=useReducer(x=>x+1,0);
@@ -316,8 +318,20 @@ function App(){
   function addTexto(){pushHist();const e=mk("texto");const t=window.prompt("Texto de la aclaración:","");const txt=(t==null||t==="")?"Texto":t;e.text=txt;e.w=Math.max(1,txt.length*0.28);setEls(p=>[...p,e]);setSelIds([e.id]);}
   function dbl(id){
     const el=elsRef.current.find(e=>e.id===id); if(!el)return;
-    if(el.tipo==="texto"){const t=window.prompt("Texto de la aclaración:",el.text||"");if(t!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,text:t,w:Math.max(1,t.length*0.28)}:e));}return;}
-    if(esMesa(el.tipo)){const n=window.prompt("Número / nombre de la mesa:",el.num||"");if(n!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,num:n}:e));}}
+    setEditM({id,tipo:el.tipo,text:el.text||"",num:el.num||"",stroke:el.stroke||""});
+  }
+  function saveEdit(){
+    if(!editM)return;const m=editM;pushHist();
+    setEls(p=>p.map(e=>{
+      if(e.id!==m.id)return e;
+      const n={...e};
+      if(m.stroke){const col=COLORS.find(c=>c.stroke===m.stroke);if(col){n.fill=col.fill;n.stroke=col.stroke;}}
+      else{delete n.fill;delete n.stroke;}
+      if(e.tipo==="texto"){n.text=m.text;n.w=Math.max(1,(m.text||"Texto").length*0.28);}
+      else if(esMesa(e.tipo)){n.num=m.num;}
+      return n;
+    }));
+    setEditM(null);
   }
   function groupAlign(axis){
     if(selIds.length<2)return;
@@ -361,6 +375,7 @@ function App(){
   // ---- arrastre (individual o grupo) ----
   function down(e,id){
     e.stopPropagation();
+    if(!e.shiftKey&&!e.altKey){const nowT=Date.now();if(lastClick.current.id===id&&nowT-lastClick.current.t<350){lastClick.current={id:null,t:0};dbl(id);return;}lastClick.current={id,t:nowT};}
     const clk=elsRef.current.find(el=>el.id===id);
     const grpIds=clk&&clk.grp?elsRef.current.filter(el=>el.grp===clk.grp).map(el=>el.id):null;
     if(e.shiftKey){setSelIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,...(grpIds||[id])]);return;}
@@ -684,20 +699,20 @@ function App(){
     return <g transform={`rotate(${TR-(e.rot||0)+(tall?90:0)})`} textAnchor="middle" fontFamily="var(--mono)" fill={color}><text y={-fs*0.16} dominantBaseline="central" fontSize={fs} fontWeight="700">{txt}</text><text y={fs*0.82} dominantBaseline="central" fontSize={small} fontWeight="400" opacity={0.75}>{med}</text></g>;
   }
   function renderEl(e){
-    const isS=selIds.includes(e.id), c=CAT[e.tipo]; let inner;
-    if(c&&c.forma==="circ"){inner=<g>{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,c)}</g>;}
-    else if(e.tipo==="escenario"||e.tipo==="pista"){const st="#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="#e5e7eb" stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{labelSize(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
+    const isS=selIds.includes(e.id), c=CAT[e.tipo]; const ec=c?{...c,fill:e.fill||c.fill,stroke:e.stroke||c.stroke}:c; let inner;
+    if(c&&c.forma==="circ"){inner=<g>{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={ec.fill} stroke={ec.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,ec)}</g>;}
+    else if(e.tipo==="escenario"||e.tipo==="pista"){const st=e.stroke||"#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={e.fill||"#e5e7eb"} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{labelSize(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="tramo_aereo"){const len=e.w*scale;inner=<g><line x1={-len/2} y1={0} x2={len/2} y2={0} stroke="#7c3aed" strokeWidth={isS?3.4:2.6} strokeLinecap="round"/><rect x={-len/2} y={-0.45*scale} width={len} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
-    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.33*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
+    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.33*scale} fontWeight="700" fill={e.stroke||"#7c3aed"}>{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
     else if(e.tipo==="escalera"){const w=e.w*scale,h=e.h*scale;inner=<g><rect x={-w/2} y={-h/2} width={w} height={h} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2.5:1.4}/><line x1={-w/2} y1={-h/6} x2={w/2} y2={-h/6} stroke="#6b7280" strokeWidth={1}/><line x1={-w/2} y1={h/6} x2={w/2} y2={h/6} stroke="#6b7280" strokeWidth={1}/></g>;}
-    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?labelSize("DJ",e,c.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,c.stroke):e.tipo==="pantalla"?labelSize("PANTALLA",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
+    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,ec.stroke):e.tipo==="dj"?labelSize("DJ",e,ec.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,ec.stroke):e.tipo==="pantalla"?labelSize("PANTALLA",e,ec.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={ec.fill} stroke={ec.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,ec)}{lbl}</g>;}
     const fino=(e.tipo==="entelado"||e.tipo==="tramo_aereo");
     const bw=e.w*scale, bh=(fino?0.9:e.h)*scale;
-    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} onDoubleClick={()=>dbl(e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
+    return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
   }
   function gridLines(){if(!grid)return null;const a=[];for(let mx=0;mx<=Math.ceil(W);mx++)a.push(<line key={"x"+mx} x1={px(mx)} y1={px(0)} x2={px(mx)} y2={px(L)} stroke={mx%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={mx%5===0?1:.6}/>);for(let my=0;my<=Math.ceil(L);my++)a.push(<line key={"y"+my} x1={px(0)} y1={px(my)} x2={px(W)} y2={px(my)} stroke={my%5===0?"#cbd5e1":"#eef2f7"} strokeWidth={my%5===0?1:.6}/>);return <g>{a}</g>;}
   function divisorias(){if(!showDoors)return null;const a=[];for(let k=combo.from;k<combo.to;k++){const y=px(S.sections[k-1][1]-off);a.push(<line key={k} x1={px(0)} y1={y} x2={px(W)} y2={y} stroke="#f59e0b" strokeWidth={2.6} strokeDasharray="8 5"/>);}return <g>{a}</g>;}
@@ -982,6 +997,18 @@ function App(){
         </div>
       </div>
     </div>
+    {editM&&<div className="modal-bg" onClick={()=>setEditM(null)}>
+      <div className="modal" style={{width:320}} onClick={e=>e.stopPropagation()}>
+        <div className="modal-h"><span>Editar elemento</span><button className="xbtn" onClick={()=>setEditM(null)}><Ic d={I.x} s={18}/></button></div>
+        {editM.tipo==="texto"&&<label className="f" style={{marginBottom:12}}>Texto<input autoFocus value={editM.text} onChange={e=>setEditM({...editM,text:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveEdit();}}/></label>}
+        {esMesa(editM.tipo)&&<label className="f" style={{marginBottom:12}}>Número / nombre<input autoFocus value={editM.num} onChange={e=>setEditM({...editM,num:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveEdit();}}/></label>}
+        <div className="muted" style={{fontWeight:600,marginBottom:6}}>Color</div>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          {COLORS.map(col=>{const sel=(editM.stroke||"#6b7280")===col.stroke;return <button key={col.nm} title={col.nm} onClick={()=>setEditM({...editM,stroke:col.stroke})} style={{flex:1,height:38,borderRadius:8,cursor:"pointer",background:col.fill,border:sel?"2.5px solid "+col.stroke:"1.5px solid "+col.stroke}}/>;})}
+        </div>
+        <div style={{display:"flex",gap:8}}><button className="btn" style={{flex:1}} onClick={()=>setEditM(null)}>Cancelar</button><button className="btn btn-primary" style={{flex:1}} onClick={saveEdit}>Guardar</button></div>
+      </div>
+    </div>}
     {exportOpen&&<div className="modal-bg" onClick={()=>setExportOpen(false)}>
       <div className="modal" style={{width:940,maxWidth:"96vw"}} onClick={e=>e.stopPropagation()}>
         <div className="modal-h"><span>Exportar plano</span><button onClick={()=>setExportOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#64748b",padding:2,lineHeight:0}}><Ic d={I.x} s={18}/></button></div>

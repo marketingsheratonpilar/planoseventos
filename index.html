@@ -243,8 +243,6 @@ function App(){
   const [imn,setImn]=useState(0.25);
   const [grid,setGrid]=useState(true);
   const [showDoors,setShowDoors]=useState(true);
-  const [editM,setEditM]=useState(null);
-  const COLORS=[{nm:"Gris",fill:"#e5e7eb",stroke:"#6b7280"},{nm:"Azul",fill:"#dbeafe",stroke:"#2563eb"},{nm:"Verde",fill:"#dcfce7",stroke:"#16a34a"},{nm:"Naranja",fill:"#ffedd5",stroke:"#ea580c"}];
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
@@ -318,20 +316,8 @@ function App(){
   function addTexto(){pushHist();const e=mk("texto");const t=window.prompt("Texto de la aclaración:","");const txt=(t==null||t==="")?"Texto":t;e.text=txt;e.w=Math.max(1,txt.length*0.28);setEls(p=>[...p,e]);setSelIds([e.id]);}
   function dbl(id){
     const el=elsRef.current.find(e=>e.id===id); if(!el)return;
-    setEditM({id,tipo:el.tipo,text:el.text||"",num:el.num||"",stroke:el.stroke||""});
-  }
-  function saveEdit(){
-    if(!editM)return;const m=editM;pushHist();
-    setEls(p=>p.map(e=>{
-      if(e.id!==m.id)return e;
-      const n={...e};
-      if(m.stroke){const col=COLORS.find(c=>c.stroke===m.stroke);if(col){n.fill=col.fill;n.stroke=col.stroke;}}
-      else{delete n.fill;delete n.stroke;}
-      if(e.tipo==="texto"){n.text=m.text;n.w=Math.max(1,(m.text||"Texto").length*0.28);}
-      else if(esMesa(e.tipo)){n.num=m.num;}
-      return n;
-    }));
-    setEditM(null);
+    if(el.tipo==="texto"){const t=window.prompt("Texto de la aclaración:",el.text||"");if(t!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,text:t,w:Math.max(1,t.length*0.28)}:e));}return;}
+    if(esMesa(el.tipo)){const n=window.prompt("Número / nombre de la mesa:",el.num||"");if(n!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,num:n}:e));}}
   }
   function groupAlign(axis){
     if(selIds.length<2)return;

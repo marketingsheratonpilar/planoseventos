@@ -318,7 +318,7 @@ function App(){
   function addTexto(){pushHist();const e=mk("texto");const t=window.prompt("Texto de la aclaración:","");const txt=(t==null||t==="")?"Texto":t;e.text=txt;e.w=Math.max(1,txt.length*0.28);setEls(p=>[...p,e]);setSelIds([e.id]);}
   function dbl(id){
     const el=elsRef.current.find(e=>e.id===id); if(!el)return;
-    setEditM({id,tipo:el.tipo,text:el.text||"",num:el.num||"",stroke:el.stroke||""});
+    setEditM({id,tipo:el.tipo,text:el.text||"",num:el.num||"",label:el.label||"",stroke:el.stroke||""});
   }
   function saveEdit(){
     if(!editM)return;const m=editM;pushHist();
@@ -329,6 +329,7 @@ function App(){
       else{delete n.fill;delete n.stroke;}
       if(e.tipo==="texto"){n.text=m.text;n.w=Math.max(1,(m.text||"Texto").length*0.28);}
       else if(esMesa(e.tipo)){n.num=m.num;}
+      else if(["barra","dj","parlante","pantalla","escenario","pista"].includes(e.tipo)){n.label=m.label;}
       return n;
     }));
     setEditM(null);
@@ -701,15 +702,15 @@ function App(){
   function renderEl(e){
     const isS=selIds.includes(e.id), c=CAT[e.tipo]; const ec=c?{...c,fill:e.fill||c.fill,stroke:e.stroke||c.stroke}:c; let inner;
     if(c&&c.forma==="circ"){inner=<g>{showSillas&&e.sillas?sillasR(e.d,e.sillas):null}<circle r={e.d/2*scale} fill={ec.fill} stroke={ec.stroke} strokeWidth={isS?2.5:1.4}/>{numText(e,ec)}</g>;}
-    else if(e.tipo==="escenario"||e.tipo==="pista"){const st=e.stroke||"#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={e.fill||"#e5e7eb"} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{labelSize(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
+    else if(e.tipo==="escenario"||e.tipo==="pista"){const st=e.stroke||"#6b7280";inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={e.fill||"#e5e7eb"} stroke={st} strokeWidth={isS?2.5:1.4}/>{modulos(e)}{e.label?wordLabel(e.label,e,st):labelSize(e.tipo==="escenario"?"ESCENARIO":"PISTA",e,st)}</g>;}
     else if(e.tipo==="aereo"){inner=<g><rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill="none" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 4"/><text textAnchor="middle" dy={4} fontSize={9} fill="#7c3aed" fontWeight="700" transform={`rotate(${TR})`}>AÉREO</text></g>;}
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="tramo_aereo"){const len=e.w*scale;inner=<g><line x1={-len/2} y1={0} x2={len/2} y2={0} stroke="#7c3aed" strokeWidth={isS?3.4:2.6} strokeLinecap="round"/><rect x={-len/2} y={-0.45*scale} width={len} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
-    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.33*scale} fontWeight="700" fill={e.stroke||"#7c3aed"}>{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
+    else if(e.tipo==="texto"){const tf=e.fs||1;inner=<g transform={`rotate(${TR})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.33*scale*tf} fontWeight="700" fill={e.stroke||"#7c3aed"}>{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale*tf-4} y={-0.34*scale*tf-4} width={e.w*scale*tf+8} height={0.68*scale*tf+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
     else if(e.tipo==="escalera"){const w=e.w*scale,h=e.h*scale;inner=<g><rect x={-w/2} y={-h/2} width={w} height={h} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2.5:1.4}/><line x1={-w/2} y1={-h/6} x2={w/2} y2={-h/6} stroke="#6b7280" strokeWidth={1}/><line x1={-w/2} y1={h/6} x2={w/2} y2={h/6} stroke="#6b7280" strokeWidth={1}/></g>;}
-    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,ec.stroke):e.tipo==="dj"?labelSize("DJ",e,ec.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,ec.stroke):e.tipo==="pantalla"?labelSize("PANTALLA",e,ec.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={ec.fill} stroke={ec.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,ec)}{lbl}</g>;}
+    else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel(e.label||"BARRA",e,ec.stroke):e.tipo==="dj"?(e.label?wordLabel(e.label,e,ec.stroke):labelSize("DJ",e,ec.stroke)):e.tipo==="parlante"?wordLabel(e.label||"Parlante",e,ec.stroke):e.tipo==="pantalla"?(e.label?wordLabel(e.label,e,ec.stroke):labelSize("PANTALLA",e,ec.stroke)):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={ec.fill} stroke={ec.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,ec)}{lbl}</g>;}
     const fino=(e.tipo==="entelado"||e.tipo==="tramo_aereo");
     const bw=e.w*scale, bh=(fino?0.9:e.h)*scale;
     return <g key={e.id} transform={`translate(${px(e.x)},${px(e.y)}) rotate(${e.rot||0})`} onPointerDown={ev=>down(ev,e.id)} style={{cursor:"grab"}}>{inner}{isS&&e.tipo!=="texto"&&<rect className="no-export" x={-bw/2-4} y={-bh/2-4} width={bw+8} height={bh+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;
@@ -967,7 +968,9 @@ function App(){
               {["dj","parlante","aereo","barra","pantalla","mesa_editable"].includes(selEl.tipo)&&<><NumF label="Ancho (m)" v={r2(selEl.w)} step={0.1} min={0.2} on={n=>updH(selEl.id,{w:n})}/><NumF label="Largo (m)" v={r2(selEl.h)} step={0.1} min={0.2} on={n=>updH(selEl.id,{h:n})}/></>}
               {(selEl.tipo==="entelado"||selEl.tipo==="tramo_aereo")&&<NumF label="Largo (m)" v={r2(selEl.w)} step={0.5} min={0.5} on={n=>updH(selEl.id,{w:n})}/>}
               {selEl.tipo==="auditorio"&&<><NumF label="Filas" v={selEl.rows} min={1} on={n=>updAud(selEl.id,{rows:n})}/><NumF label="Columnas" v={selEl.cols} min={1} on={n=>updAud(selEl.id,{cols:n})}/><NumF label="Pasillos" v={selEl.aisles} min={0} on={n=>updAud(selEl.id,{aisles:n})}/><NumF label="Pasillo (m)" v={r2(selEl.aisleW)} step={0.1} min={0.3} on={n=>updAud(selEl.id,{aisleW:n})}/></>}
+              {selEl.tipo==="texto"&&<><label className="f" style={{gridColumn:"1 / -1"}}>Texto<input value={selEl.text||""} onChange={e=>updH(selEl.id,{text:e.target.value,w:Math.max(1,(e.target.value||"Texto").length*0.28)})}/></label><NumF label="Tamaño" v={r2(selEl.fs??1)} step={0.1} min={0.3} max={6} on={n=>updH(selEl.id,{fs:n})}/></>}
             </div>
+            {selEl.tipo==="texto"&&<div style={{display:"flex",gap:6,marginTop:9}}><button className={"btn "+(((selEl.rot||0)%180===0)?"btn-primary":"")} style={{flex:1}} onClick={()=>updH(selEl.id,{rot:0})}>Horizontal</button><button className={"btn "+(((selEl.rot||0)%180!==0)?"btn-primary":"")} style={{flex:1}} onClick={()=>updH(selEl.id,{rot:90})}>Vertical</button></div>}
             <div style={{display:"flex",gap:6,marginTop:9,flexWrap:"wrap"}}>
               <button className="btn" onClick={()=>rotOne(selEl.id,90)}><Ic d={I.rotate} s={14}/> 90°</button>
               <button className="btn" onClick={()=>rotOne(selEl.id,15)}>+15°</button>
@@ -1002,6 +1005,7 @@ function App(){
         <div className="modal-h"><span>Editar elemento</span><button className="xbtn" onClick={()=>setEditM(null)}><Ic d={I.x} s={18}/></button></div>
         {editM.tipo==="texto"&&<label className="f" style={{marginBottom:12}}>Texto<input autoFocus value={editM.text} onChange={e=>setEditM({...editM,text:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveEdit();}}/></label>}
         {esMesa(editM.tipo)&&<label className="f" style={{marginBottom:12}}>Número / nombre<input autoFocus value={editM.num} onChange={e=>setEditM({...editM,num:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveEdit();}}/></label>}
+        {["barra","dj","parlante","pantalla","escenario","pista"].includes(editM.tipo)&&<label className="f" style={{marginBottom:12}}>Texto / etiqueta<input autoFocus value={editM.label} onChange={e=>setEditM({...editM,label:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveEdit();}}/></label>}
         <div className="muted" style={{fontWeight:600,marginBottom:6}}>Color</div>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
           {COLORS.map(col=>{const sel=(editM.stroke||"#6b7280")===col.stroke;return <button key={col.nm} title={col.nm} onClick={()=>setEditM({...editM,stroke:col.stroke})} style={{flex:1,height:38,borderRadius:8,cursor:"pointer",background:col.fill,border:sel?"2.5px solid "+col.stroke:"1.5px solid "+col.stroke}}/>;})}

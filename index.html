@@ -126,6 +126,11 @@ const CAT = {
   escuela_244x075: { nm:"Escuela 2,44×0,75",          forma:"rect", w:2.44, h:0.75, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
   espejada_244x090:{ nm:"Espejada 2,44x0,90",       forma:"rect", w:2.44, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
   mesa_editable:   { nm:"Mesa Editable",             forma:"rect", w:1.50, h:0.90, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas" },
+  cuadrada_060:    { nm:"Cuadrada LV 0,6",            forma:"rect", w:0.60, h:0.60, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:2 },
+  cuadrada_100:    { nm:"Cuadrada LV/DG 1,0",         forma:"rect", w:1.00, h:1.00, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:4 },
+  redonda_120:     { nm:"Redonda LV Ø1,2",            forma:"circ", d:1.20,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:6 },
+  cuadrada_080:    { nm:"Cuadrada DG 0,8",            forma:"rect", w:0.80, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:2 },
+  redonda_140:     { nm:"Redonda DG Ø1,4",            forma:"circ", d:1.40,         fill:"#e5e7eb", stroke:"#6b7280", cat:"Mesas", sillas:6 },
   barra:           { nm:"Barra (mod. 2,00×0,80)",   forma:"rect", w:2.00, h:0.80, fill:"#e5e7eb", stroke:"#6b7280", cat:"Servicio" },
   dj:              { nm:"DJ (editable)",              forma:"rect", w:1.50, h:1.00, fill:"#e5e7eb", stroke:"#6b7280", cat:"Técnica" },
   parlante:        { nm:"Parlante (editable)",        forma:"rect", w:0.60, h:0.60, fill:"#9ca3af", stroke:"#4b5563", cat:"Técnica" },
@@ -138,7 +143,7 @@ const SEAT=0.5, SGX=0.10, SGY=0.50;
 function audColsX(cols,aisles,aw){const groups=(aisles||0)+1;const cpg=Math.ceil(cols/groups);const xs=[];for(let i=0;i<cols;i++){const g=Math.floor(i/cpg);xs.push(i*(SEAT+SGX)+g*aw);}return xs;}
 function audDims(cols,rows,aisles,aw){const xs=audColsX(cols,aisles,aw);const w=xs.length?xs[xs.length-1]+SEAT:SEAT;const h=rows*SEAT+(rows-1)*SGY;return {w,h};}
 const MESA_OPTS=["redonda_180","redonda_150","cuadrada_090","escuela_244x075","escuela_244x045","escuela_180x045","espejada_244x090"];
-const MAXSIL={cuadrada_090:4,escuela_180x045:3,escuela_244x045:4,escuela_244x075:10,espejada_244x090:10};
+const MAXSIL={cuadrada_090:4,escuela_180x045:3,escuela_244x045:4,escuela_244x075:10,espejada_244x090:10,cuadrada_060:2,cuadrada_080:2,cuadrada_100:4,redonda_120:6,redonda_140:6};
 const maxSillas=e=>e.tipo==="mesa_editable"?Math.max(1,Math.floor((e.w+e.h)*2/0.5)):MAXSIL[e.tipo];
 const SALONES={
   girasoles:{nombre:"Los Girasoles",w:21.64,total:43.44,divThick:0.1,
@@ -673,6 +678,8 @@ function App(){
     const t=e.tipo;
     if(t==="mesa_editable"){const w=e.w,h=e.h,P=2*(w+h),oY=(h/2+0.35)*scale,oX=(w/2+0.35)*scale,out=[];for(let i=0;i<n;i++){let d=((i+0.5)/n)*P,cx,cy,deg;if(d<=w){cx=(-w/2+d)*scale;cy=-oY;deg=180;}else if(d<=w+h){cx=oX;cy=(-h/2+(d-w))*scale;deg=270;}else if(d<=2*w+h){cx=(w/2-(d-w-h))*scale;cy=oY;deg=0;}else{cx=-oX;cy=(h/2-(d-2*w-h))*scale;deg=90;}out.push({cx,cy,deg});}return out;}
     if(t==="cuadrada_090"){const order=[{cx:0,cy:-offY,deg:180},{cx:offX,cy:0,deg:270},{cx:0,cy:offY,deg:0},{cx:-offX,cy:0,deg:90}];return order.slice(0,Math.min(4,n));}
+    if(t==="cuadrada_060"||t==="cuadrada_080"){const order=[{cx:0,cy:-offY,deg:180},{cx:0,cy:offY,deg:0}];return order.slice(0,Math.min(2,n));}
+    if(t==="cuadrada_100"){const order=[{cx:0,cy:-offY,deg:180},{cx:0,cy:offY,deg:0},{cx:-offX,cy:0,deg:90},{cx:offX,cy:0,deg:270}];return order.slice(0,Math.min(4,n));}
     if(t==="escuela_244x075"||t==="espejada_244x090"){const out=[];out.push(...bottom(Math.min(4,n)));if(n>4)out.push(...top(Math.min(4,n-4)));if(n>8)out.push(leftEnd);if(n>9)out.push(rightEnd);return out;}
     return bottom(n);
   }

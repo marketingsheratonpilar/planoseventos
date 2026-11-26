@@ -243,6 +243,8 @@ function App(){
   const [imn,setImn]=useState(0.25);
   const [grid,setGrid]=useState(true);
   const [showDoors,setShowDoors]=useState(true);
+  const [editM,setEditM]=useState(null);
+  const COLORS=[{nm:"Gris",fill:"#e5e7eb",stroke:"#6b7280"},{nm:"Azul",fill:"#dbeafe",stroke:"#2563eb"},{nm:"Verde",fill:"#dcfce7",stroke:"#16a34a"},{nm:"Naranja",fill:"#ffedd5",stroke:"#ea580c"}];
   const [showSillas,setShowSillas]=useState(true);
   const [showAlturas,setShowAlturas]=useState(false);
   const [rot,setRot]=useState(270);
@@ -316,8 +318,20 @@ function App(){
   function addTexto(){pushHist();const e=mk("texto");const t=window.prompt("Texto de la aclaración:","");const txt=(t==null||t==="")?"Texto":t;e.text=txt;e.w=Math.max(1,txt.length*0.28);setEls(p=>[...p,e]);setSelIds([e.id]);}
   function dbl(id){
     const el=elsRef.current.find(e=>e.id===id); if(!el)return;
-    if(el.tipo==="texto"){const t=window.prompt("Texto de la aclaración:",el.text||"");if(t!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,text:t,w:Math.max(1,t.length*0.28)}:e));}return;}
-    if(esMesa(el.tipo)){const n=window.prompt("Número / nombre de la mesa:",el.num||"");if(n!=null){pushHist();setEls(p=>p.map(e=>e.id===id?{...e,num:n}:e));}}
+    setEditM({id,tipo:el.tipo,text:el.text||"",num:el.num||"",stroke:el.stroke||""});
+  }
+  function saveEdit(){
+    if(!editM)return;const m=editM;pushHist();
+    setEls(p=>p.map(e=>{
+      if(e.id!==m.id)return e;
+      const n={...e};
+      if(m.stroke){const col=COLORS.find(c=>c.stroke===m.stroke);if(col){n.fill=col.fill;n.stroke=col.stroke;}}
+      else{delete n.fill;delete n.stroke;}
+      if(e.tipo==="texto"){n.text=m.text;n.w=Math.max(1,(m.text||"Texto").length*0.28);}
+      else if(esMesa(e.tipo)){n.num=m.num;}
+      return n;
+    }));
+    setEditM(null);
   }
   function groupAlign(axis){
     if(selIds.length<2)return;
@@ -661,22 +675,22 @@ function App(){
     return bottom(n);
   }
   function sillasRect(e,n){const s=0.5*scale;return rectSeats(e,Math.max(0,n||0)).map((p,i)=><g key={i} transform={`translate(${p.cx},${p.cy}) rotate(${p.deg})`}><rect x={-s/2} y={-s/2} width={s} height={s} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={.8}/><line x1={-s/2} y1={s/2} x2={s/2} y2={s/2} stroke="#6b7280" strokeWidth={1.4}/></g>);}
-  function numText(e,c){if(e.num==null||e.num==="")return null;const fs=c.forma==="circ"?e.d*scale*0.5:Math.min(e.h*scale*0.85,e.w*scale*0.5);return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="800" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.num}</text>;}
+  function numText(e,c){if(e.num==null||e.num==="")return null;const fs=c.forma==="circ"?e.d*scale*0.4:Math.min(e.h*scale*0.65,e.w*scale*0.42);return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="800" fill={c.stroke} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)})`}>{e.num}</text>;}
   function modulos(e){const a=[];for(let c=1;c<e.cols;c++){const x=-e.w/2*scale+c*e.modW*scale;a.push(<line key={"v"+c} x1={x} y1={-e.h/2*scale} x2={x} y2={e.h/2*scale} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}for(let r=1;r<e.rows;r++){const y=-e.h/2*scale+r*e.modH*scale;a.push(<line key={"h"+r} x1={-e.w/2*scale} y1={y} x2={e.w/2*scale} y2={y} stroke="rgba(0,0,0,.18)" strokeWidth={.5}/>);}return a;}
   function enteladoPath(e){const len=e.w*scale,amp=0.2*scale,waves=Math.max(2,Math.round(e.w/0.7)),steps=waves*10;let d="M "+(-len/2)+" 0";for(let i=1;i<=steps;i++){const x=-len/2+(i/steps)*len,y=Math.sin((i/steps)*waves*2*Math.PI)*amp;d+=" L "+x.toFixed(1)+" "+y.toFixed(1);}return d;}
 
   function wordLabel(txt,e,color){
     const lo=Math.max(e.w,e.h),sh=Math.min(e.w,e.h);
-    let fs=Math.min(sh*scale*0.6, lo*scale*0.92/Math.max(1,txt.length*0.6));
-    fs=Math.max(6,Math.min(fs,15));
+    let fs=Math.min(sh*scale*0.5, lo*scale*0.82/Math.max(1,txt.length*0.6));
+    fs=Math.max(6,Math.min(fs,12));
     const tot=(((e.rot||0)+rot)%360+360)%360;
     const tall=(tot%180===0)?(e.h>e.w):(e.w>e.h);
     return <text textAnchor="middle" dominantBaseline="central" fontSize={fs} fontWeight="700" fill={color} fontFamily="var(--mono)" transform={`rotate(${TR-(e.rot||0)+(tall?90:0)})`}>{txt}</text>;
   }
   function labelSize(txt,e,color){
     const lo=Math.max(e.w,e.h),sh=Math.min(e.w,e.h);
-    let fs=Math.min(sh*scale*0.42, lo*scale*0.9/Math.max(1,txt.length*0.6));
-    fs=Math.max(6,Math.min(fs,14));
+    let fs=Math.min(sh*scale*0.36, lo*scale*0.82/Math.max(1,txt.length*0.6));
+    fs=Math.max(6,Math.min(fs,11));
     const small=Math.max(5,fs*0.62);
     const tot=(((e.rot||0)+rot)%360+360)%360;
     const tall=(tot%180===0)?(e.h>e.w):(e.w>e.h);
@@ -691,7 +705,7 @@ function App(){
     else if(e.tipo==="entelado"){inner=<g><path d={enteladoPath(e)} fill="none" stroke="#0d9488" strokeWidth={isS?3:2.4}/><rect x={-e.w/2*scale} y={-0.45*scale} width={e.w*scale} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="tramo_aereo"){const len=e.w*scale;inner=<g><line x1={-len/2} y1={0} x2={len/2} y2={0} stroke="#7c3aed" strokeWidth={isS?3.4:2.6} strokeLinecap="round"/><rect x={-len/2} y={-0.45*scale} width={len} height={0.9*scale} fill="transparent"/></g>;}
     else if(e.tipo==="auditorio"){const xs=audColsX(e.cols,e.aisles,e.aisleW);const w=e.w,h=e.h,a=[];for(let r=0;r<e.rows;r++)for(let ci=0;ci<e.cols;ci++){const x=(xs[ci]-w/2)*scale,y=(r*(SEAT+SGY)-h/2)*scale,ss=SEAT*scale;a.push(<g key={r+"_"+ci}><rect x={x} y={y} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={.7}/><line x1={x} y1={y+ss} x2={x+ss} y2={y+ss} stroke="#6b7280" strokeWidth={1.8}/></g>);}inner=<g>{a}</g>;}
-    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR-(e.rot||0)})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.42*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
+    else if(e.tipo==="texto"){inner=<g transform={`rotate(${TR})`}><text textAnchor="middle" dominantBaseline="central" fontSize={0.33*scale} fontWeight="700" fill="#7c3aed">{e.text||"Texto"}</text>{isS&&<rect className="no-export" x={-e.w/2*scale-4} y={-0.34*scale-4} width={e.w*scale+8} height={0.68*scale+8} fill="none" stroke="#1e3a5f" strokeWidth={1.4} strokeDasharray="4 3"/>}</g>;}
     else if(e.tipo==="silla"){const ss=e.w*scale;inner=<g><rect x={-ss/2} y={-ss/2} width={ss} height={ss} rx={2} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2:1}/><line x1={-ss/2} y1={ss/2} x2={ss/2} y2={ss/2} stroke="#6b7280" strokeWidth={1.8}/></g>;}
     else if(e.tipo==="escalera"){const w=e.w*scale,h=e.h*scale;inner=<g><rect x={-w/2} y={-h/2} width={w} height={h} fill="#e5e7eb" stroke="#6b7280" strokeWidth={isS?2.5:1.4}/><line x1={-w/2} y1={-h/6} x2={w/2} y2={-h/6} stroke="#6b7280" strokeWidth={1}/><line x1={-w/2} y1={h/6} x2={w/2} y2={h/6} stroke="#6b7280" strokeWidth={1}/></g>;}
     else{const ch=(esMesa(e.tipo)&&showSillas&&e.sillas)?sillasRect(e,e.sillas):null;const lbl=e.tipo==="barra"?wordLabel("BARRA",e,c.stroke):e.tipo==="dj"?labelSize("DJ",e,c.stroke):e.tipo==="parlante"?wordLabel("Parlante",e,c.stroke):e.tipo==="pantalla"?labelSize("PANTALLA",e,c.stroke):null;inner=<g>{ch}<rect x={-e.w/2*scale} y={-e.h/2*scale} width={e.w*scale} height={e.h*scale} fill={c.fill} stroke={c.stroke} strokeWidth={isS?2.5:1.4}/>{esMesa(e.tipo)&&numText(e,c)}{lbl}</g>;}
